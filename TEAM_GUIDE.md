@@ -99,18 +99,18 @@ git push origin <your-branch-name>
 
 ### Step-by-Step Flow:
 
-1. **Week 1 (Hello-World)**:
+1. **(Hello-World)**:
    - Join the Twilio WhatsApp Sandbox from two phones.
    - Start your FastAPI server (`uvicorn app.main:app --reload --port 8000`) and run `ngrok http 8000`.
    - In `app/api/webhook.py`, write a simple bot that echoes back whatever message you send it.
    - In `app/services/llm_analyzer.py`, write a small test script calling Gemini API with a sample scam text.
-2. **Week 2 (Core Extraction & Analysis)**:
+2. **(Core Extraction & Analysis)**:
    - In `app/services/extractor.py`, write regex functions to extract:
      - UPI IDs (`[\w\.\-]+@[\w]+`)
      - Indian phone numbers (10 digits)
      - Links/URLs and Money amounts (₹50,000, 50000, Rs. 500).
    - Connect to Arun's engine: Call `evaluate_risk(text=text, entities=extracted, scam_tags=llm_tags)`.
-3. **Week 3 (Multilingual Replies & Chakshu)**:
+3. **(Multilingual Replies & Chakshu)**:
    - In `app/services/translator.py`, write clean responses for Safe, Suspicious, and High Risk in Tamil, Hindi, and English.
    - In High Risk replies, include Chakshu (reporting) and 1930 helpline pointers.
 
@@ -118,7 +118,7 @@ git push origin <your-branch-name>
 
 ## 👤 Person 2: Geerthiga (Voice, Payment Guard & Family Loop)
 
-- **Goal:** Whisper converts WhatsApp voice notes to text; the Two-key guard holds risky payments, checks the secret family code (Check A), and sends real-time approval requests to the son's phone (Check B).
+- **Goal:** Whisper converts WhatsApp voice notes to text; the Two-Key guard holds risky payments, checks the secret family code (Check A), and sends real-time approval requests to the son's phone (Check B).
 - **Your Branch:** **`p2-guard`**
 - **Access your branch:**
   ```bash
@@ -134,13 +134,13 @@ git push origin <your-branch-name>
 
 ### Step-by-Step Flow:
 
-1. **Week 1 (Hello-World)**:
+1. **(Hello-World)**:
    - In `app/services/stt.py`, test Whisper transcribing a sample `.ogg` voice note to text.
    - Write `hash_family_code(code)` and `verify_family_code(code, hash)` using `bcrypt`.
-2. **Week 2 (Registration Flow)**:
+2. **(Registration Flow)**:
    - Create a registration flow that saves Amma's phone, son's phone, and the hashed family code into the `family_contacts` database table.
    - Feed transcribed voice notes from `stt.py` into Aiman's message pipeline.
-3. **Week 3 (Two-Key Guard & Holds)**:
+3. **(Two-Key Guard & Holds)**:
    - In `app/services/guard.py`:
      - If payee is in `trusted_payees` table $\rightarrow$ `status: "allowed"` (no friction).
      - If new or unverified $\rightarrow$ `status: "held"`.
@@ -169,17 +169,17 @@ git push origin <your-branch-name>
 
 ### Step-by-Step Flow:
 
-1. **Week 1 (Hello-World)**:
+1. **(Hello-World)**:
    - In `scripts/generate_mules.py`, write a script using `Faker` to generate ~500 fake Indian bank accounts and normal transactions.
    - Load them into a `networkx.DiGraph` and print node/edge statistics.
-2. **Week 2 (Planted Rings & Detectors)**:
+2. **(Planted Rings & Detectors)**:
    - Plant fraud rings in the synthetic dataset:
      - Fan-in / Fan-out: 10 accounts send money to 1 hub, which quickly disperses it to 5 cash-out accounts.
      - 3–5 hop chains and cycles.
      - Plant `kbc.claim@upi` inside one of the rings!
    - Plant innocent lookalikes: A busy tea shop (many small payments in, no fast transfers out) and a landlord (monthly rent).
    - In `app/services/graph.py`, write detectors to identify high-velocity pass-through accounts and write flagged accounts into Arun's `flagged_entities` table.
-3. **Week 3 (Streamlit Bank Console)**:
+3. **(Streamlit Bank Console)**:
    - In `dashboard/app.py`, run `streamlit run dashboard/app.py`.
    - Show metric cards: Total Transactions, Flagged Mule Accounts, Active Rings.
    - Render an interactive graph: normal accounts in grey, flagged mule rings in **red**.
