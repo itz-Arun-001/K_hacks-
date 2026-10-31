@@ -1,0 +1,171 @@
+[
+  {
+    "id": "SCAM_001",
+    "text": "URGENT NOTICE FROM CBI: A digital arrest warrant has been issued against your Aadhaar card for money laundering. Do not disconnect this call or tell anyone. Transfer ₹50,000 security deposit to cbi.investigation@upi within 15 minutes.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "digital_arrest",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": ["cbi.investigation@upi"],
+      "amounts": [50000]
+    }
+  },
+  {
+    "id": "SCAM_002",
+    "text": "Dear consumer, your electricity power cut will be tonight at 9:30 PM because your previous month bill was not updated. Please immediately contact our electricity officer Mr. Sharma at 9876543210 to avoid disconnection.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "electricity_scam",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": ["9876543210"],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "SCAM_003",
+    "text": "Congratulations! You have won KBC lottery prize money of ₹25,00,000 in lucky draw. To claim your prize money, send registration fee ₹12,500 to kbc.claim@upi immediately.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "lottery_scam",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": ["kbc.claim@upi"],
+      "amounts": [12500, 2500000]
+    }
+  },
+  {
+    "id": "SCAM_004",
+    "text": "Amma, I had an accident with my bike near Anna Nagar. Police has arrested me and they are demanding ₹35,000 to release me without FIR. Please send money to inspector.subramaniam@upi urgently, don't tell Appa right now!",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "relative_in_trouble",
+    "split": "test",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": ["inspector.subramaniam@upi"],
+      "amounts": [35000]
+    }
+  },
+  {
+    "id": "SCAM_005",
+    "text": "Your parcel from FedEx has been seized at Mumbai Customs containing illegal passports and drugs. Call DCP Cyber Crime immediately at 9123456780 to avoid digital arrest.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "digital_arrest",
+    "split": "test",
+    "entities": {
+      "links": [],
+      "phones": ["9123456780"],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "GENUINE_001",
+    "text": "HDFC Bank Alert: ₹1,450.00 debited from a/c **4120 on 31-OCT at APOLLO PHARMACY. Avail Bal: ₹18,920.50. If not done by you, SMS BLOCK to 5676712.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": ["5676712"],
+      "upi_ids": [],
+      "amounts": [1450.00]
+    }
+  },
+  {
+    "id": "GENUINE_002",
+    "text": "State Bank of India: Your OTP for internet banking login is 849201. Valid for 10 minutes. Do not share this OTP with anyone, including bank staff.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "GENUINE_003",
+    "text": "Dear Customer, scheduled maintenance on our netbanking portal tonight from 02:00 AM to 04:00 AM. Services will be temporarily unavailable. Regret the inconvenience - ICICI Bank.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "GENUINE_004",
+    "text": "Kauvery Hospital: Your consultation with Dr. Ramanathan is confirmed for tomorrow at 10:30 AM. Please arrive 15 minutes prior.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "NORMAL_001",
+    "text": "Good morning Amma, please take your blood pressure tablet after breakfast. I will reach home by 7 PM today.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": [],
+      "amounts": []
+    }
+  },
+  {
+    "id": "NORMAL_002",
+    "text": "Pay ₹450 to murugan.vegetables@upi for tomatoes and onions.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": ["murugan.vegetables@upi"],
+      "amounts": [450]
+    }
+  },
+  {
+    "id": "NORMAL_003",
+    "text": "Happy Diwali to you and family! Wishing you good health and prosperity.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {
+      "links": [],
+      "phones": [],
+      "upi_ids": [],
+      "amounts": []
+    }
+  }
+]
+
