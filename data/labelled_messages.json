@@ -6,12 +6,7 @@
     "expected_level": "high",
     "scam_type": "digital_arrest",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": ["cbi.investigation@upi"],
-      "amounts": [50000]
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": ["cbi.investigation@upi"], "amounts": [50000]}
   },
   {
     "id": "SCAM_002",
@@ -20,12 +15,7 @@
     "expected_level": "high",
     "scam_type": "electricity_scam",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": ["9876543210"],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": ["9876543210"], "upi_ids": [], "amounts": []}
   },
   {
     "id": "SCAM_003",
@@ -34,12 +24,7 @@
     "expected_level": "high",
     "scam_type": "lottery_scam",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": ["kbc.claim@upi"],
-      "amounts": [12500, 2500000]
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": ["kbc.claim@upi"], "amounts": [12500, 2500000]}
   },
   {
     "id": "SCAM_004",
@@ -48,12 +33,7 @@
     "expected_level": "high",
     "scam_type": "relative_in_trouble",
     "split": "test",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": ["inspector.subramaniam@upi"],
-      "amounts": [35000]
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": ["inspector.subramaniam@upi"], "amounts": [35000]}
   },
   {
     "id": "SCAM_005",
@@ -62,12 +42,97 @@
     "expected_level": "high",
     "scam_type": "digital_arrest",
     "split": "test",
-    "entities": {
-      "links": [],
-      "phones": ["9123456780"],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": ["9123456780"], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "SCAM_006",
+    "text": "Part-time job offer: Earn ₹3,000 to ₹8,000 daily from home just by liking YouTube videos. No experience needed. Pay ₹1,000 activation fee to hr.earnfast@upi to receive task link.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "part_time_job",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": ["hr.earnfast@upi"], "amounts": [1000, 3000, 8000]}
+  },
+  {
+    "id": "SCAM_007",
+    "text": "Your SBI YONO account will be blocked today within 24 hours. Click link http://sbi-kyc-update-portal.info/login to update your Pan card immediately or services will be terminated.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "phishing_kyc",
+    "split": "train",
+    "entities": {"links": ["http://sbi-kyc-update-portal.info/login"], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "SCAM_008",
+    "text": "TRAI Warning: All incoming and outgoing calls on your mobile number will be blocked within 2 hours due to illegal advertising. Press 9 or call 9811223344 for verification.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "digital_arrest",
+    "split": "train",
+    "entities": {"links": [], "phones": ["9811223344"], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "SCAM_009",
+    "text": "Income Tax Refund Approved: ₹28,450 has been approved for your refund. Please verify your bank account and enter your ATM PIN at http://incometax-gov-refund.cc immediately.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "tax_refund",
+    "split": "test",
+    "entities": {"links": ["http://incometax-gov-refund.cc"], "phones": [], "upi_ids": [], "amounts": [28450]}
+  },
+  {
+    "id": "SCAM_010",
+    "text": "Dear customer, your credit card reward points worth ₹9,850 are expiring tonight. Redeem cash directly to your bank by transferring ₹500 fee to rewards.hdfc@upi.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "reward_points",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": ["rewards.hdfc@upi"], "amounts": [500, 9850]}
+  },
+  {
+    "id": "SCAM_011",
+    "text": "Emergency: Rahul had a major road accident on GST Road. Admitted to ICU. Hospital requires ₹50,000 immediately for surgery. Transfer to hospital.trauma@upi. Do not call, Rahul cannot talk.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "relative_in_trouble",
+    "split": "test",
+    "entities": {"links": [], "phones": [], "upi_ids": ["hospital.trauma@upi"], "amounts": [50000]}
+  },
+  {
+    "id": "SCAM_012",
+    "text": "Supreme Court Order: A non-bailable warrant has been issued against you by Cyber Crime Delhi in money laundering FIR #902. Contact Inspector Sharma at 9988776655 immediately.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "digital_arrest",
+    "split": "train",
+    "entities": {"links": [], "phones": ["9988776655"], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "SCAM_013",
+    "text": "Dear customer, your gas connection will be disconnected by Bharat Gas tonight due to unverified KYC. Contact gas helpline officer at 9776655443 immediately.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "electricity_scam",
+    "split": "test",
+    "entities": {"links": [], "phones": ["9776655443"], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "SCAM_014",
+    "text": "Instant pre-approved loan of ₹5,00,000 without collateral or CIBIL check. Pay ₹2,500 file processing fee to fastloan.disbursal@upi to get loan credited in 10 minutes.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "loan_scam",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": ["fastloan.disbursal@upi"], "amounts": [2500, 500000]}
+  },
+  {
+    "id": "SCAM_015",
+    "text": "Amma, this is your nephew Suresh from Bangalore. My car broke down near Hosur and mechanic is asking ₹15,000 cash. Please GPay to mechanic.repair@upi urgently.",
+    "category": "scam",
+    "expected_level": "high",
+    "scam_type": "relative_in_trouble",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": ["mechanic.repair@upi"], "amounts": [15000]}
   },
   {
     "id": "GENUINE_001",
@@ -76,12 +141,7 @@
     "expected_level": "safe",
     "scam_type": "none",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": ["5676712"],
-      "upi_ids": [],
-      "amounts": [1450.00]
-    }
+    "entities": {"links": [], "phones": ["5676712"], "upi_ids": [], "amounts": [1450.00]}
   },
   {
     "id": "GENUINE_002",
@@ -90,12 +150,7 @@
     "expected_level": "safe",
     "scam_type": "none",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
   },
   {
     "id": "GENUINE_003",
@@ -104,12 +159,7 @@
     "expected_level": "safe",
     "scam_type": "none",
     "split": "test",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
   },
   {
     "id": "GENUINE_004",
@@ -118,12 +168,61 @@
     "expected_level": "safe",
     "scam_type": "none",
     "split": "test",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "GENUINE_005",
+    "text": "IndiGo Flight Alert: Flight 6E-204 from Chennai to Delhi is delayed by 45 minutes due to air traffic congestion. Revised departure time is 18:30 hrs.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "GENUINE_006",
+    "text": "TNEB Power Shutdown: Scheduled maintenance power shutdown in T.Nagar area tomorrow from 09:00 AM to 02:00 PM. Power will be restored after work completion.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "GENUINE_007",
+    "text": "Dear Cardmember, payment of ₹4,210.00 is due on your HDFC credit card ending 9821 on 05-NOV. Pay via official mobile app or visit netbanking.hdfcbank.com.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": [4210.0]}
+  },
+  {
+    "id": "GENUINE_008",
+    "text": "Aadhaar Authentication Alert: Your Aadhaar was successfully authenticated for Jeevan Pramaan digital life certificate on 31-10-2026 14:15. If not you, contact 1947.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": ["1947"], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "GENUINE_009",
+    "text": "Your LIC policy #8493021 premium of ₹8,450 is due on 15-NOV-2026. Avoid late fee by paying on licindia.in or at nearest LIC branch.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": [8450]}
+  },
+  {
+    "id": "GENUINE_010",
+    "text": "Zomato delivery partner Anand is arriving with your order in 8 minutes. OTP for order delivery is 4912.",
+    "category": "genuine_scary",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
   },
   {
     "id": "NORMAL_001",
@@ -132,40 +231,69 @@
     "expected_level": "safe",
     "scam_type": "none",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
   },
   {
     "id": "NORMAL_002",
-    "text": "Pay ₹450 to murugan.vegetables@upi for tomatoes and onions.",
+    "text": "Pay ₹450 to anand.milk@upi for this month milk supply.",
     "category": "normal",
     "expected_level": "safe",
     "scam_type": "none",
     "split": "train",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": ["murugan.vegetables@upi"],
-      "amounts": [450]
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": ["anand.milk@upi"], "amounts": [450]}
   },
   {
     "id": "NORMAL_003",
-    "text": "Happy Diwali to you and family! Wishing you good health and prosperity.",
+    "text": "Happy Diwali to you and family! Wishing you good health, peace, and long life.",
     "category": "normal",
     "expected_level": "safe",
     "scam_type": "none",
     "split": "test",
-    "entities": {
-      "links": [],
-      "phones": [],
-      "upi_ids": [],
-      "amounts": []
-    }
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "NORMAL_004",
+    "text": "Amma, did you like the sari Priya sent? Let me know if the color is good.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "NORMAL_005",
+    "text": "Pay ₹820 to tneb.bill@upi for electricity bill payment.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {"links": [], "phones": [], "upi_ids": ["tneb.bill@upi"], "amounts": [820]}
+  },
+  {
+    "id": "NORMAL_006",
+    "text": "Doctor appointment completed. Everything is normal, sugar level is 110. Will bring fruits on the way home.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "NORMAL_007",
+    "text": "Please send me the recipe for tomato rasam when you get free time.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "test",
+    "entities": {"links": [], "phones": [], "upi_ids": [], "amounts": []}
+  },
+  {
+    "id": "NORMAL_008",
+    "text": "Pay ₹650 to apollo.pharmacy@upi for regular medicines.",
+    "category": "normal",
+    "expected_level": "safe",
+    "scam_type": "none",
+    "split": "train",
+    "entities": {"links": [], "phones": [], "upi_ids": ["apollo.pharmacy@upi"], "amounts": [650]}
   }
 ]
-

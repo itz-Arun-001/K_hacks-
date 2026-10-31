@@ -6,10 +6,12 @@ Contract:
 input:  { user_id, type, text, entities: {links, phones, upi_ids, amounts}, scam_tags }
 output: { score, level: "safe|suspicious|high", reasons: [...] }
 
-Week 1: Foundations & Rule-based Stub Engine
-- Unblocks Person 1 (Aiman: Bot) and Person 2 (Geerthiga: Guard) immediately.
-- Implements initial heuristic rule checks, keyword triggers, and database blocklist matching.
-- Week 2 will introduce the scikit-learn model and per-user anomaly baseline.
+Components:
+1. Database Threat Blocklist: Instant flag for reported mule accounts / family blocks.
+2. Zero-Day Heuristic Parser: Coercion keywords (Digital arrest, utility cutoff, fake jobs, lottery, distress).
+3. Suspicious Link Detector: Unofficial domains, IP addresses, or suspicious TLDs.
+4. LLM Signal: Tactics parsing and intent confidence (from Person 1: Aiman).
+5. User Baseline Anomaly Profiler: Anomaly score for unusual amount spikes and new payees (Arun).
 """
 
 from typing import Dict, List, Any, Optional
@@ -21,14 +23,44 @@ except ImportError:
     Session = None
     FlaggedEntity = None
 
+try:
+    from app.services.baseline import evaluate_baseline_deviation
+except ImportError:
+    evaluate_baseline_deviation = None
 
-# Pre-defined high-risk keywords for initial heuristic scoring (Week 1)
+
+# Pre-defined high-risk keywords for comprehensive heuristic scoring
 SCAM_KEYWORDS = {
-    "digital_arrest": ["digital arrest", "cbi", "police warrant", "trai block", "customs", "cyber crime", "money laundering"],
-    "electricity_scam": ["electricity will be", "power cut", "electricity officer", "bill overdue", "disconnection", "bill was not updated"],
-    "lottery_scam": ["kbc lottery", "congratulations won", "claim prize", "lucky draw", "25 lakh", "prize money"],
-    "relative_in_trouble": ["accident", "arrested by police", "don't tell appa", "send money to hospital", "friend in emergency"],
-    "urgency_triggers": ["within 10 minutes", "within 15 minutes", "immediately", "do not disconnect", "urgent transfer", "secretly", "urgently"]
+    "digital_arrest": [
+        "digital arrest", "cbi", "police warrant", "trai warning", "customs",
+        "cyber crime", "money laundering", "non-bailable warrant", "supreme court order"
+    ],
+    "utility_disconnection": [
+        "electricity will be", "power cut", "electricity officer", "bill overdue",
+        "disconnection", "bill was not updated", "gas connection", "bharat gas",
+        "mobile number will be blocked", "calls on your mobile", "sim blocked"
+    ],
+    "lottery_and_rewards": [
+        "kbc lottery", "congratulations won", "claim prize", "lucky draw",
+        "25 lakh", "prize money", "reward points", "points expiring", "redeem cash"
+    ],
+    "relative_in_trouble": [
+        "accident", "arrested by police", "don't tell appa", "send money to hospital",
+        "friend in emergency", "nephew suresh", "cannot talk"
+    ],
+    "fake_jobs_and_loans": [
+        "part-time job", "part time job", "earn daily", "liking youtube",
+        "task link", "activation fee", "earn from home", "pre-approved loan",
+        "without collateral", "file processing fee"
+    ],
+    "phishing_kyc": [
+        "account will be blocked", "kyc update", "pan card immediately",
+        "services will be terminated", "atm pin", "refund approved", "verify your bank account"
+    ],
+    "urgency_triggers": [
+        "within 10 minutes", "within 15 minutes", "within 2 hours", "within 24 hours",
+        "immediately", "do not disconnect", "urgent transfer", "secretly", "urgently", "expiring tonight"
+    ]
 }
 
 
@@ -41,7 +73,7 @@ def evaluate_risk(
     db: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
-    Evaluates risk score and generates reasons based on rules, entities, and scam tags.
+    Evaluates composite risk score and generates reasons based on rules, entities, LLM tags, and user baseline.
     """
     entities = entities or {}
     scam_tags = scam_tags or {}
@@ -76,22 +108,41 @@ def evaluate_risk(
                 if category == "digital_arrest":
                     score += 0.55
                     reasons.append("Detected 'Digital Arrest' impersonation tactic (fake police/CBI warrant).")
-                elif category == "electricity_scam":
+                elif category == "utility_disconnection":
                     score += 0.50
-                    reasons.append("Detected fake utility cut-off threat.")
-                elif category == "lottery_scam":
+                    reasons.append("Detected urgent utility/service cut-off threat.")
+                elif category == "lottery_and_rewards":
                     score += 0.50
-                    reasons.append("Detected fraudulent lottery/prize claim pattern.")
+                    reasons.append("Detected fraudulent lottery/reward points advance-fee pattern.")
                 elif category == "relative_in_trouble":
                     score += 0.55
                     reasons.append("Detected fake relative in distress / accident coercion pattern.")
+                elif category == "fake_jobs_and_loans":
+                    score += 0.50
+                    reasons.append("Detected high-risk work-from-home or unsecured loan advance fee trap.")
+                elif category == "phishing_kyc":
+                    score += 0.55
+                    reasons.append("Detected banking KYC suspension threat or fake refund lure.")
                 elif category == "urgency_triggers":
                     score += 0.20
-                    reasons.append("Extreme urgency pressure detected ('transfer immediately').")
+                    reasons.append("Extreme urgency pressure detected ('act immediately to avoid action').")
                 break
 
     # --------------------------------------------------------------------------
-    # 3. LLM Signal Integration (from Person 1)
+    # 3. Suspicious Links & Phishing Indicators
+    # --------------------------------------------------------------------------
+    links = entities.get("links", [])
+    for link in links:
+        link_lower = link.lower()
+        if any(suspicious_tld in link_lower for suspicious_tld in [".info", ".cc", ".top", ".club", ".xyz", ".live"]):
+            score += 0.45
+            reasons.append(f"Suspicious unverified domain extension in link: {link}")
+        elif "sbi" in link_lower or "incometax" in link_lower or "kyc" in link_lower:
+            score += 0.50
+            reasons.append(f"Phishing link impersonating government/banking institution: {link}")
+
+    # --------------------------------------------------------------------------
+    # 4. LLM Signal Integration (from Person 1: Aiman)
     # --------------------------------------------------------------------------
     if scam_tags:
         llm_confidence = scam_tags.get("confidence", 0.0)
@@ -106,23 +157,35 @@ def evaluate_risk(
             reasons.append(f"Identified psychological pressure tactics: {', '.join(tactics)}.")
 
     # --------------------------------------------------------------------------
-    # 4. Amount-based Heuristics (for payments)
+    # 5. User Spending Baseline Deviation Check (Person 4: Arun)
     # --------------------------------------------------------------------------
     amounts = entities.get("amounts", [])
-    for amt in amounts:
+    if db and user_id and evaluate_baseline_deviation and amounts:
         try:
-            val = float(amt)
-            if val >= 50000:
-                score += 0.30
-                reasons.append(f"High-value transfer request (₹{val:,.2f}) above typical threshold.")
-            elif val >= 10000:
-                score += 0.15
-                reasons.append(f"Significant transfer request (₹{val:,.2f}).")
-        except (ValueError, TypeError):
-            continue
+            val = float(amounts[0])
+            payee_id = (entities.get("upi_ids") or [None])[0] or (entities.get("phones") or [None])[0]
+            numeric_uid = int(user_id) if str(user_id).isdigit() else 1
+            
+            baseline_result = evaluate_baseline_deviation(db, numeric_uid, payee_id or "", val)
+            if baseline_result["anomaly_score"] > 0:
+                score += baseline_result["anomaly_score"]
+                reasons.extend(baseline_result["reasons"])
+        except (ValueError, TypeError, Exception):
+            pass
+    elif amounts:
+        for amt in amounts:
+            try:
+                val = float(amt)
+                if val >= 50000:
+                    score += 0.40
+                    reasons.append(f"High-value transfer request (₹{val:,.2f}) above typical threshold.")
+                elif val >= 10000:
+                    score += 0.20
+            except (ValueError, TypeError):
+                continue
 
     # --------------------------------------------------------------------------
-    # 5. Calibrate Final Score & Level
+    # 6. Calibrate Final Score & Level
     # --------------------------------------------------------------------------
     final_score = min(max(round(score, 2), 0.0), 1.0)
     
