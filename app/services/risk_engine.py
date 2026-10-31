@@ -6,10 +6,11 @@ Contract:
 input:  { user_id, type, text, entities: {links, phones, upi_ids, amounts}, scam_tags }
 output: { score, level: "safe|suspicious|high", reasons: [...] }
 
-Week 1: Foundations & Rule-based Stub Engine
-- Unblocks Person 1 (Aiman: Bot) and Person 2 (Geerthiga: Guard) immediately.
-- Implements initial heuristic rule checks, keyword triggers, and database blocklist matching.
-- Week 2 will introduce the scikit-learn model and per-user anomaly baseline.
+Components:
+1. Database Threat Blocklist: Instant flag for reported mule accounts / family blocks.
+2. Zero-Day Heuristic Parser: Coercion keywords (Digital arrest, fake utility, lottery, distress).
+3. LLM Signal: Tactics parsing and intent confidence (from Person 1: Aiman).
+4. User Baseline Anomaly Profiler: Anomaly score for unusual amount spikes and new payees (Arun).
 """
 
 from typing import Dict, List, Any, Optional
@@ -21,8 +22,13 @@ except ImportError:
     Session = None
     FlaggedEntity = None
 
+try:
+    from app.services.baseline import evaluate_baseline_deviation
+except ImportError:
+    evaluate_baseline_deviation = None
 
-# Pre-defined high-risk keywords for initial heuristic scoring (Week 1)
+
+# Pre-defined high-risk keywords for initial heuristic scoring
 SCAM_KEYWORDS = {
     "digital_arrest": ["digital arrest", "cbi", "police warrant", "trai block", "customs", "cyber crime", "money laundering"],
     "electricity_scam": ["electricity will be", "power cut", "electricity officer", "bill overdue", "disconnection", "bill was not updated"],
@@ -41,7 +47,7 @@ def evaluate_risk(
     db: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
-    Evaluates risk score and generates reasons based on rules, entities, and scam tags.
+    Evaluates composite risk score and generates reasons based on rules, entities, LLM tags, and user baseline.
     """
     entities = entities or {}
     scam_tags = scam_tags or {}
@@ -91,7 +97,7 @@ def evaluate_risk(
                 break
 
     # --------------------------------------------------------------------------
-    # 3. LLM Signal Integration (from Person 1)
+    # 3. LLM Signal Integration (from Person 1: Aiman)
     # --------------------------------------------------------------------------
     if scam_tags:
         llm_confidence = scam_tags.get("confidence", 0.0)
@@ -106,20 +112,34 @@ def evaluate_risk(
             reasons.append(f"Identified psychological pressure tactics: {', '.join(tactics)}.")
 
     # --------------------------------------------------------------------------
-    # 4. Amount-based Heuristics (for payments)
+    # 4. User Spending Baseline Deviation Check (Person 4: Arun)
     # --------------------------------------------------------------------------
     amounts = entities.get("amounts", [])
-    for amt in amounts:
+    if db and user_id and evaluate_baseline_deviation and amounts:
         try:
-            val = float(amt)
-            if val >= 50000:
-                score += 0.30
-                reasons.append(f"High-value transfer request (₹{val:,.2f}) above typical threshold.")
-            elif val >= 10000:
-                score += 0.15
-                reasons.append(f"Significant transfer request (₹{val:,.2f}).")
-        except (ValueError, TypeError):
-            continue
+            val = float(amounts[0])
+            payee_id = (entities.get("upi_ids") or [None])[0] or (entities.get("phones") or [None])[0]
+            numeric_uid = int(user_id) if str(user_id).isdigit() else 1
+            
+            baseline_result = evaluate_baseline_deviation(db, numeric_uid, payee_id or "", val)
+            if baseline_result["anomaly_score"] > 0:
+                score += baseline_result["anomaly_score"]
+                reasons.extend(baseline_result["reasons"])
+        except (ValueError, TypeError, Exception):
+            pass
+    elif amounts:
+        # Generic heuristic if no user baseline is available
+        for amt in amounts:
+            try:
+                val = float(amt)
+                if val >= 50000:
+                    score += 0.40
+                    reasons.append(f"High-value transfer request (₹{val:,.2f}) above typical threshold.")
+                elif val >= 10000:
+                    score += 0.20
+                    reasons.append(f"Significant transfer request (₹{val:,.2f}).")
+            except (ValueError, TypeError):
+                continue
 
     # --------------------------------------------------------------------------
     # 5. Calibrate Final Score & Level
