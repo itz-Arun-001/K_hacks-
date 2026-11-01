@@ -13,8 +13,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.database import init_db, get_db, Event
+from app.database import init_db, get_db, Event, FlaggedEntity
 from app.services.risk_engine import evaluate_risk
+from app.services.retrainer import record_family_feedback
 from app.utils.audit import log_event
 
 
@@ -68,6 +69,14 @@ class RiskCheckResponse(BaseModel):
     score: float
     level: str  # "safe", "suspicious", "high"
     reasons: list[str]
+
+
+class FeedbackRequest(BaseModel):
+    entity_type: str = Field(..., description="upi_id, phone, link, or account")
+    entity_value: str = Field(..., description="Malicious or approved entity identifier")
+    verdict: str = Field(..., description="'BLOCK' or 'APPROVE'")
+    reporter_phone: Optional[str] = Field(default=None, description="Phone of family member")
+    reason: Optional[str] = Field(default="Family member blocked via WhatsApp Check B")
 
 
 # ==============================================================================
@@ -135,5 +144,58 @@ def view_audit_logs(limit: int = 50, db: Session = Depends(get_db)):
             "created_at": log.created_at
         }
         for log in logs
+    ]
+
+
+@app.post("/feedback")
+def submit_family_feedback(payload: FeedbackRequest, db: Session = Depends(get_db)):
+    """
+    Check B Family Feedback Endpoint (L6: Active Learning Loop).
+    Called by Person 2's Twilio webhook when Son replies 'BLOCK' or 'APPROVE'.
+    Automatically writes malicious entities to the global threat blocklist.
+    """
+    flagged = record_family_feedback(
+        db=db,
+        entity_type=payload.entity_type,
+        entity_value=payload.entity_value,
+        verdict=payload.verdict,
+        reporter_phone=payload.reporter_phone,
+        reason=payload.reason
+    )
+    
+    if flagged:
+        return {
+            "status": "success",
+            "action": "ENTITY_BLACKLISTED",
+            "entity": flagged.entity_value,
+            "risk_score": flagged.risk_score,
+            "message": f"Entity '{flagged.entity_value}' has been permanently added to the global blocklist."
+        }
+    return {
+        "status": "success",
+        "action": "FEEDBACK_RECORDED",
+        "verdict": payload.verdict,
+        "message": "Feedback recorded without blocklist elevation."
+    }
+
+
+@app.get("/flagged-entities")
+def list_flagged_entities(limit: int = 100, db: Session = Depends(get_db)):
+    """
+    Threat Intelligence Query API (L5: Mule Network).
+    Called by Person 3's Bank Mule Graph Console to visualize flagged hubs.
+    """
+    entities = db.query(FlaggedEntity).order_by(FlaggedEntity.created_at.desc()).limit(limit).all()
+    return [
+        {
+            "id": e.id,
+            "entity_type": e.entity_type,
+            "entity_value": e.entity_value,
+            "source": e.source,
+            "risk_score": e.risk_score,
+            "reason": e.reason,
+            "created_at": e.created_at
+        }
+        for e in entities
     ]
 
