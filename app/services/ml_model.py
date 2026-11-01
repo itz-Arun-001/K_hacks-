@@ -53,8 +53,15 @@ class SafeLoopRiskClassifier:
         """Extracts dense domain-specific signals from text and extracted entities."""
         text_lower = (text or "").lower()
         
+        # Safe numeric parsing of amount (prevent math domain errors on negative or invalid numbers)
+        amount_val = 0.0
         amounts = entities.get("amounts", [])
-        amount_val = float(amounts[0]) if amounts else 0.0
+        if amounts:
+            try:
+                first_amt = float(amounts[0])
+                amount_val = max(first_amt, 0.0)
+            except (ValueError, TypeError):
+                amount_val = 0.0
         log_amount = math.log10(amount_val + 1.0) / 6.0  # Normalized (up to ₹10 Lakh)
 
         has_upi = 1.0 if entities.get("upi_ids") else 0.0

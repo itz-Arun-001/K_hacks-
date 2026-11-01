@@ -42,7 +42,7 @@ SCAM_KEYWORDS = {
         "cyber crime", "money laundering", "non-bailable warrant", "supreme court order"
     ],
     "utility_disconnection": [
-        "electricity will be", "power cut", "electricity officer", "bill overdue",
+        "electricity will be", "power cut", "cut off", "water supply", "electricity officer", "bill overdue",
         "disconnection", "bill was not updated", "gas connection", "bharat gas",
         "mobile number will be blocked", "calls on your mobile", "sim blocked"
     ],
@@ -205,7 +205,15 @@ def evaluate_risk(
             reasons.append(f"Identified psychological pressure tactics: {', '.join(tactics)}.")
 
     # --------------------------------------------------------------------------
-    # 7. Calibrate Final Score & Level
+    # 7. Standard Transactional Banking Notification Safeguard
+    # --------------------------------------------------------------------------
+    is_standard_bank_sms = any(b in text_lower for b in ["withdrawn from atm", "debited from a/c", "debited from account", "credited to your"])
+    if is_standard_bank_sms and not entities.get("upi_ids") and not entities.get("links"):
+        score = min(score, 0.15)
+        reasons = [r for r in reasons if "ML pattern" not in r]
+
+    # --------------------------------------------------------------------------
+    # 8. Calibrate Final Score & Level
     # --------------------------------------------------------------------------
     final_score = min(max(round(score, 2), 0.0), 1.0)
     
