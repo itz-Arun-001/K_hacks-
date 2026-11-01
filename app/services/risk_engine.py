@@ -15,6 +15,7 @@ Integrated Pipeline:
 6. LLM Signal: Tactics parsing and intent confidence (from Person 1: Aiman).
 """
 
+import re
 from typing import Dict, List, Any, Optional
 
 try:
@@ -37,14 +38,20 @@ except ImportError:
 
 # Pre-defined high-risk keywords for comprehensive heuristic scoring
 SCAM_KEYWORDS = {
+    "adversarial_injection": [
+        "ignore all previous", "system prompt override", "bypass_guard", "disregard risk",
+        "override instructions", "ignore prior rules", "bypass verification", "admin debug"
+    ],
     "digital_arrest": [
         "digital arrest", "cbi", "police warrant", "trai warning", "customs",
-        "cyber crime", "money laundering", "non-bailable warrant", "supreme court order"
+        "cyber crime", "money laundering", "non-bailable warrant", "supreme court order",
+        "police station me", "case cancel"
     ],
     "utility_disconnection": [
         "electricity will be", "power cut", "cut off", "water supply", "electricity officer", "bill overdue",
         "disconnection", "bill was not updated", "gas connection", "bharat gas",
-        "mobile number will be blocked", "calls on your mobile", "sim blocked"
+        "mobile number will be blocked", "calls on your mobile", "sim blocked",
+        "discontinued", "scheduled disconnection"
     ],
     "lottery_and_rewards": [
         "kbc lottery", "congratulations won", "claim prize", "lucky draw",
@@ -52,7 +59,8 @@ SCAM_KEYWORDS = {
     ],
     "relative_in_trouble": [
         "accident", "arrested by police", "don't tell appa", "send money to hospital",
-        "friend in emergency", "nephew suresh", "cannot talk"
+        "friend in emergency", "nephew suresh", "cannot talk", "urgent-ah", "gpay pannu",
+        "tholanjipochu", "seekiram", "bhejo", "mat batana kisi ko"
     ],
     "fake_jobs_and_loans": [
         "part-time job", "part time job", "earn daily", "liking youtube",
@@ -84,6 +92,8 @@ def evaluate_risk(
     entities = entities or {}
     scam_tags = scam_tags or {}
     text_lower = (text or "").lower()
+    # Normalize spaced obfuscation (e.g. 'e l e c t r i c i t y' -> 'electricity')
+    text_normalized = re.sub(r'(?<=\b[a-zA-Z])\s+(?=[a-zA-Z]\b)', '', text_lower)
     
     reasons: List[str] = []
     score: float = 0.0
@@ -152,8 +162,11 @@ def evaluate_risk(
     # --------------------------------------------------------------------------
     for category, keywords in SCAM_KEYWORDS.items():
         for kw in keywords:
-            if kw in text_lower:
-                if category == "digital_arrest":
+            if kw in text_lower or kw in text_normalized:
+                if category == "adversarial_injection":
+                    score = max(score, 0.90)
+                    reasons.append("Detected adversarial prompt injection or guard bypass attempt.")
+                elif category == "digital_arrest":
                     score = max(score, 0.75)
                     reasons.append("Detected 'Digital Arrest' impersonation tactic (fake police/CBI warrant).")
                 elif category == "utility_disconnection":
@@ -179,13 +192,22 @@ def evaluate_risk(
     # --------------------------------------------------------------------------
     # 5. Suspicious Links & Phishing Indicators
     # --------------------------------------------------------------------------
+    OFFICIAL_DOMAINS = [
+        "tnebnet.org", "sbi.co.in", "incometax.gov.in", "tneb.tn.gov.in",
+        "gov.in", "nic.in", "npci.org.in"
+    ]
     links = entities.get("links", [])
     for link in links:
         link_lower = link.lower()
-        if any(suspicious_tld in link_lower for suspicious_tld in [".info", ".cc", ".top", ".xyz", ".club"]):
+        if any(official in link_lower for official in OFFICIAL_DOMAINS):
+            continue  # Trusted official government or utility domain
+        elif any(suspicious_tld in link_lower for suspicious_tld in [".info", ".cc", ".top", ".xyz", ".club"]):
             score = max(score, 0.80)
             reasons.append(f"Suspicious unverified domain extension in link: {link}")
-        elif "sbi" in link_lower or "incometax" in link_lower or "kyc" in link_lower:
+        elif any(shortener in link_lower for shortener in ["bit.ly", "tinyurl.com", "t.co", "is.gd", "cutt.ly"]):
+            score = max(score, 0.75)
+            reasons.append(f"Shortened/masked URL obscures true destination: {link}")
+        elif "sbi" in link_lower or "incometax" in link_lower or "kyc" in link_lower or "tneb" in link_lower:
             score = max(score, 0.85)
             reasons.append(f"Phishing link impersonating government/banking institution: {link}")
 
