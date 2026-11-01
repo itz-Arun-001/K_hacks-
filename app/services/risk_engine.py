@@ -6,12 +6,13 @@ Contract:
 input:  { user_id, type, text, entities: {links, phones, upi_ids, amounts}, scam_tags }
 output: { score, level: "safe|suspicious|high", reasons: [...] }
 
-Components:
-1. Database Threat Blocklist: Instant flag for reported mule accounts / family blocks.
-2. Zero-Day Heuristic Parser: Coercion keywords (Digital arrest, utility cutoff, fake jobs, lottery, distress).
-3. Suspicious Link Detector: Unofficial domains, IP addresses, or suspicious TLDs.
-4. LLM Signal: Tactics parsing and intent confidence (from Person 1: Aiman).
-5. User Baseline Anomaly Profiler: Anomaly score for unusual amount spikes and new payees (Arun).
+Integrated Pipeline:
+1. Threat Intelligence Blocklist: Hard instant-flag for confirmed mule rings and family blocks.
+2. Calibrated Scikit-Learn Model: TF-IDF + meta-feature probability score P(scam | x).
+3. Zero-Day Heuristic Parser: Psychological coercion keywords (Digital arrest, utility cutoff, fake jobs, etc.).
+4. Link Threat Analyzer: Unofficial domains, suspicious TLDs (.info, .cc, .top).
+5. User Spending Baseline Deviation: Anomaly score for unusual amount spikes and new payees (Arun).
+6. LLM Signal: Tactics parsing and intent confidence (from Person 1: Aiman).
 """
 
 from typing import Dict, List, Any, Optional
@@ -27,6 +28,11 @@ try:
     from app.services.baseline import evaluate_baseline_deviation
 except ImportError:
     evaluate_baseline_deviation = None
+
+try:
+    from app.services.ml_model import get_ml_classifier
+except ImportError:
+    get_ml_classifier = None
 
 
 # Pre-defined high-risk keywords for comprehensive heuristic scoring
@@ -73,7 +79,7 @@ def evaluate_risk(
     db: Optional[Any] = None
 ) -> Dict[str, Any]:
     """
-    Evaluates composite risk score and generates reasons based on rules, entities, LLM tags, and user baseline.
+    Evaluates composite risk score and generates reasons based on ML model, rules, entities, LLM tags, and user baseline.
     """
     entities = entities or {}
     scam_tags = scam_tags or {}
@@ -96,69 +102,13 @@ def evaluate_risk(
                 FlaggedEntity.entity_value.in_(checked_values)
             ).first()
             if flagged:
-                score = max(score, flagged.risk_score or 0.95)
+                score = max(score, flagged.risk_score or 0.98)
                 reasons.append(f"Entity '{flagged.entity_value}' is on the cybercrime / mule blocklist ({flagged.reason or 'Flagged'}).")
 
     # --------------------------------------------------------------------------
-    # 2. Heuristic Keyword Matching (Zero-day scam scripts)
+    # 2. User Spending Baseline Deviation Check (Person 4: Arun)
     # --------------------------------------------------------------------------
-    for category, keywords in SCAM_KEYWORDS.items():
-        for kw in keywords:
-            if kw in text_lower:
-                if category == "digital_arrest":
-                    score += 0.55
-                    reasons.append("Detected 'Digital Arrest' impersonation tactic (fake police/CBI warrant).")
-                elif category == "utility_disconnection":
-                    score += 0.50
-                    reasons.append("Detected urgent utility/service cut-off threat.")
-                elif category == "lottery_and_rewards":
-                    score += 0.50
-                    reasons.append("Detected fraudulent lottery/reward points advance-fee pattern.")
-                elif category == "relative_in_trouble":
-                    score += 0.55
-                    reasons.append("Detected fake relative in distress / accident coercion pattern.")
-                elif category == "fake_jobs_and_loans":
-                    score += 0.50
-                    reasons.append("Detected high-risk work-from-home or unsecured loan advance fee trap.")
-                elif category == "phishing_kyc":
-                    score += 0.55
-                    reasons.append("Detected banking KYC suspension threat or fake refund lure.")
-                elif category == "urgency_triggers":
-                    score += 0.20
-                    reasons.append("Extreme urgency pressure detected ('act immediately to avoid action').")
-                break
-
-    # --------------------------------------------------------------------------
-    # 3. Suspicious Links & Phishing Indicators
-    # --------------------------------------------------------------------------
-    links = entities.get("links", [])
-    for link in links:
-        link_lower = link.lower()
-        if any(suspicious_tld in link_lower for suspicious_tld in [".info", ".cc", ".top", ".club", ".xyz", ".live"]):
-            score += 0.45
-            reasons.append(f"Suspicious unverified domain extension in link: {link}")
-        elif "sbi" in link_lower or "incometax" in link_lower or "kyc" in link_lower:
-            score += 0.50
-            reasons.append(f"Phishing link impersonating government/banking institution: {link}")
-
-    # --------------------------------------------------------------------------
-    # 4. LLM Signal Integration (from Person 1: Aiman)
-    # --------------------------------------------------------------------------
-    if scam_tags:
-        llm_confidence = scam_tags.get("confidence", 0.0)
-        llm_type = scam_tags.get("scam_type")
-        tactics = scam_tags.get("tactics", [])
-        
-        if llm_type and llm_type != "none":
-            score = max(score, llm_confidence)
-            reasons.append(f"AI identified scam pattern: {llm_type.replace('_', ' ').title()}.")
-            
-        if tactics:
-            reasons.append(f"Identified psychological pressure tactics: {', '.join(tactics)}.")
-
-    # --------------------------------------------------------------------------
-    # 5. User Spending Baseline Deviation Check (Person 4: Arun)
-    # --------------------------------------------------------------------------
+    baseline_anomaly_score = 0.0
     amounts = entities.get("amounts", [])
     if db and user_id and evaluate_baseline_deviation and amounts:
         try:
@@ -168,7 +118,8 @@ def evaluate_risk(
             
             baseline_result = evaluate_baseline_deviation(db, numeric_uid, payee_id or "", val)
             if baseline_result["anomaly_score"] > 0:
-                score += baseline_result["anomaly_score"]
+                baseline_anomaly_score = baseline_result["anomaly_score"]
+                score += baseline_anomaly_score
                 reasons.extend(baseline_result["reasons"])
         except (ValueError, TypeError, Exception):
             pass
@@ -185,7 +136,76 @@ def evaluate_risk(
                 continue
 
     # --------------------------------------------------------------------------
-    # 6. Calibrate Final Score & Level
+    # 3. Calibrated Scikit-Learn Model Prediction
+    # --------------------------------------------------------------------------
+    ml_prob = None
+    if get_ml_classifier:
+        classifier = get_ml_classifier()
+        if classifier and classifier.is_trained:
+            ml_prob = classifier.predict_proba(text, entities, baseline_anomaly_score)
+            score = max(score, ml_prob)
+            ml_reasons = classifier.explain(text, entities, top_k=2)
+            reasons.extend(ml_reasons)
+
+    # --------------------------------------------------------------------------
+    # 4. Zero-Day Heuristic Keyword Matching (Fallback & Reinforcement)
+    # --------------------------------------------------------------------------
+    for category, keywords in SCAM_KEYWORDS.items():
+        for kw in keywords:
+            if kw in text_lower:
+                if category == "digital_arrest":
+                    score = max(score, 0.75)
+                    reasons.append("Detected 'Digital Arrest' impersonation tactic (fake police/CBI warrant).")
+                elif category == "utility_disconnection":
+                    score = max(score, 0.70)
+                    reasons.append("Detected urgent utility/service cut-off threat.")
+                elif category == "lottery_and_rewards":
+                    score = max(score, 0.75)
+                    reasons.append("Detected fraudulent lottery/reward points advance-fee pattern.")
+                elif category == "relative_in_trouble":
+                    score = max(score, 0.80)
+                    reasons.append("Detected fake relative in distress / accident coercion pattern.")
+                elif category == "fake_jobs_and_loans":
+                    score = max(score, 0.75)
+                    reasons.append("Detected high-risk work-from-home or unsecured loan advance fee trap.")
+                elif category == "phishing_kyc":
+                    score = max(score, 0.75)
+                    reasons.append("Detected banking KYC suspension threat or fake refund lure.")
+                elif category == "urgency_triggers":
+                    score += 0.15
+                    reasons.append("Extreme urgency pressure detected ('act immediately to avoid action').")
+                break
+
+    # --------------------------------------------------------------------------
+    # 5. Suspicious Links & Phishing Indicators
+    # --------------------------------------------------------------------------
+    links = entities.get("links", [])
+    for link in links:
+        link_lower = link.lower()
+        if any(suspicious_tld in link_lower for suspicious_tld in [".info", ".cc", ".top", ".xyz", ".club"]):
+            score = max(score, 0.80)
+            reasons.append(f"Suspicious unverified domain extension in link: {link}")
+        elif "sbi" in link_lower or "incometax" in link_lower or "kyc" in link_lower:
+            score = max(score, 0.85)
+            reasons.append(f"Phishing link impersonating government/banking institution: {link}")
+
+    # --------------------------------------------------------------------------
+    # 6. LLM Signal Integration (from Person 1: Aiman)
+    # --------------------------------------------------------------------------
+    if scam_tags:
+        llm_confidence = scam_tags.get("confidence", 0.0)
+        llm_type = scam_tags.get("scam_type")
+        tactics = scam_tags.get("tactics", [])
+        
+        if llm_type and llm_type != "none":
+            score = max(score, llm_confidence)
+            reasons.append(f"AI identified scam pattern: {llm_type.replace('_', ' ').title()}.")
+            
+        if tactics:
+            reasons.append(f"Identified psychological pressure tactics: {', '.join(tactics)}.")
+
+    # --------------------------------------------------------------------------
+    # 7. Calibrate Final Score & Level
     # --------------------------------------------------------------------------
     final_score = min(max(round(score, 2), 0.0), 1.0)
     
@@ -193,7 +213,7 @@ def evaluate_risk(
         level = "high"
         if not reasons:
             reasons.append("Multiple high-risk fraud signals detected.")
-    elif final_score >= 0.35:
+    elif final_score >= 0.50:
         level = "suspicious"
         if not reasons:
             reasons.append("Unverified payee or suspicious context detected.")
