@@ -107,3 +107,4 @@
 ### Speaker Notes (Arun - 35s):
 > *"SafeLoop is not just a hackathon prototype; it is an enterprise-ready shield for India's digital public infrastructure. By partnering with retail banks and NPCI, SafeLoop stops fraud before settlements execute, saving institutions millions in cyber insurance and dispute resolution.  
 > SafeLoop gives our parents the freedom to use digital payments without living in fear. With SafeLoop, no Indian elder stands alone against cyber syndicates. Thank you!"*
+

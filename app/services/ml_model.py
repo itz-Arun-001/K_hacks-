@@ -105,7 +105,7 @@ class SafeLoopRiskClassifier:
         # Scale meta-features by 3.0 to match the TF-IDF feature space density
         return [v * 3.0 for v in raw_meta]
 
-    def fit(self, samples: List[Dict[str, Any]]) -> "SafeLoopRiskClassifier":
+    def fit(self, samples: List[Dict[str, Any]], max_features: int = 500) -> "SafeLoopRiskClassifier":
         """Trains the TF-IDF vectorizer and calibrated classifier on labelled samples."""
         if joblib is None or np is None:
             raise ImportError("scikit-learn and joblib must be installed to train the model.")
@@ -116,7 +116,7 @@ class SafeLoopRiskClassifier:
         # 1. Fit TF-IDF on word n-grams (1-2) with sublinear term frequency
         self.vectorizer = TfidfVectorizer(
             ngram_range=(1, 2),
-            max_features=300,
+            max_features=max_features,
             sublinear_tf=True,
             strip_accents="unicode"
         )
