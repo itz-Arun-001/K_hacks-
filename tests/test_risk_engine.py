@@ -1,6 +1,7 @@
 """
 SafeLoop Risk Engine Evaluation Script (Person 4: Arun)
-Measures Precision, Recall, F1-Score, and False Positive Rates on the labelled benchmark dataset.
+Measures Precision, Recall, F1-Score, and False Positive Rates on benchmark datasets.
+Supports both the 3,000+ extensive dataset and the 88 core curated benchmark.
 """
 
 import json
@@ -16,18 +17,17 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from app.services.risk_engine import evaluate_risk
 
 
-def run_evaluation(data_path: str = "data/labelled_messages.json"):
+def run_evaluation(data_path: str = "data/large_dataset_3000.json"):
     if not os.path.exists(data_path):
-        print(f"Dataset file not found at: {data_path}")
-        return
+        data_path = "data/labelled_messages.json"
 
     with open(data_path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
 
     print("\n" + "=" * 70)
-    print(" SAFELOOP BENCHMARK EVALUATION (PERSON 4: ARUN)")
+    print(f" SAFELOOP BENCHMARK EVALUATION (PERSON 4: ARUN)")
+    print(f" Evaluated Dataset: {data_path} (n = {len(dataset):,})")
     print("=" * 70)
-    print(f"Total labelled samples: {len(dataset)}")
 
     for split in ["all", "test"]:
         tp = 0  # True Positives: Scam correctly flagged as high/suspicious
@@ -82,21 +82,21 @@ def run_evaluation(data_path: str = "data/labelled_messages.json"):
         f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
         fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
 
-        split_label = "FULL DATASET" if split == "all" else "HELD-OUT TEST SET (30%)"
-        print(f"\n[{split_label}] (n = {len(samples)})")
-        print(f"  • True Positives (Scams Caught): {tp}")
-        print(f"  • True Negatives (Genuine Passed): {tn}")
+        split_label = "FULL DATASET" if split == "all" else "HELD-OUT TEST SPLIT (20%)"
+        print(f"\n[{split_label}] (n = {len(samples):,})")
+        print(f"  • True Positives (Scams Caught): {tp:,}")
+        print(f"  • True Negatives (Genuine Passed): {tn:,}")
         print(f"  • False Positives (False Alarms): {fp}")
         print(f"  • False Negatives (Missed Scams): {fn}")
         print(f"  -------------------------------------")
-        print(f"  • Precision:            {precision * 100:.1f}%")
-        print(f"  • Recall:               {recall * 100:.1f}%")
-        print(f"  • F1 Score:             {f1 * 100:.1f}%")
-        print(f"  • False Positive Rate:  {fpr * 100:.1f}%")
+        print(f"  • Precision:            {precision * 100:.2f}%")
+        print(f"  • Recall:               {recall * 100:.2f}%")
+        print(f"  • F1 Score:             {f1 * 100:.2f}%")
+        print(f"  • False Positive Rate:  {fpr * 100:.2f}%")
 
         if mistakes:
             print("\n  List of Mistakes:")
-            for m in mistakes:
+            for m in mistakes[:10]:
                 print(f"    - [{m['type']}] ID: {m['id']} | Predicted: {m['got']} | Expected: {m['expected']}")
                 print(f"      Reasons: {m['reasons']}")
         else:
@@ -106,5 +106,5 @@ def run_evaluation(data_path: str = "data/labelled_messages.json"):
 
 
 if __name__ == "__main__":
-    run_evaluation()
-
+    target = sys.argv[1] if len(sys.argv) > 1 else "data/large_dataset_3000.json"
+    run_evaluation(target)
