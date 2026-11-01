@@ -16,11 +16,18 @@ Architecture:
 2. Classifier:
    - Calibrated Logistic Regression with balanced class weighting
    - Outputs calibrated risk probabilities rather than raw heuristics
+3. Model Versioning:
+   - Training date, sample count, and max_features saved into .joblib bundle
+   - Accessible via SafeLoopRiskClassifier.metadata dict
 """
 
 import os
 import math
+import logging
 from typing import Dict, Any, List, Optional
+from datetime import datetime
+
+logger = logging.getLogger("safeloop.ml_model")
 
 try:
     import joblib
@@ -43,6 +50,8 @@ class SafeLoopRiskClassifier:
         self.model = None
         self.feature_names: List[str] = []
         self.is_trained: bool = False
+        # Enhancement #4 — Model versioning metadata
+        self.metadata: Dict[str, Any] = {}
 
     def _extract_meta_features(
         self,
@@ -52,7 +61,7 @@ class SafeLoopRiskClassifier:
     ) -> List[float]:
         """Extracts dense domain-specific signals from text and extracted entities."""
         text_lower = (text or "").lower()
-        
+
         # Safe numeric parsing of amount (prevent math domain errors on negative or invalid numbers)
         amount_val = 0.0
         amounts = entities.get("amounts", [])
@@ -142,6 +151,18 @@ class SafeLoopRiskClassifier:
 
         self.model = base_lr
         self.is_trained = True
+
+        # Enhancement #4 — Store model version metadata
+        self.metadata = {
+            "trained_at": datetime.utcnow().isoformat() + "Z",
+            "train_samples": len(samples),
+            "scam_samples": int(y.sum()),
+            "genuine_samples": int((y == 0).sum()),
+            "max_features": max_features,
+            "tfidf_vocab_size": len(self.vectorizer.get_feature_names_out()),
+            "meta_feature_count": 9,
+            "model_class": "LogisticRegression(C=10.0, balanced)"
+        }
         return self
 
     def predict_proba(
@@ -191,15 +212,18 @@ class SafeLoopRiskClassifier:
         return explanations
 
     def save(self, filepath: str = MODEL_PATH):
-        """Serializes model artifacts to disk using joblib."""
+        """Serializes model artifacts and version metadata to disk using joblib."""
         if joblib is None:
             return
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         joblib.dump({
             "vectorizer": self.vectorizer,
             "model": self.model,
-            "is_trained": self.is_trained
+            "is_trained": self.is_trained,
+            "metadata": self.metadata  # Enhancement #4 — persist metadata
         }, filepath)
+        logger.info("[SafeLoop ML] Model saved to %s (samples=%s, trained_at=%s)",
+                    filepath, self.metadata.get("train_samples"), self.metadata.get("trained_at"))
 
     @classmethod
     def load(cls, filepath: str = MODEL_PATH) -> Optional["SafeLoopRiskClassifier"]:
@@ -212,10 +236,10 @@ class SafeLoopRiskClassifier:
             instance.vectorizer = bundle.get("vectorizer")
             instance.model = bundle.get("model")
             instance.is_trained = bundle.get("is_trained", False)
+            instance.metadata = bundle.get("metadata", {})  # Enhancement #4
             return instance
         except Exception as exc:
-            import logging
-            logging.getLogger(__name__).error(
+            logger.error(
                 "[SafeLoop ML] Failed to load model from '%s': %s. "
                 "Falling back to heuristic-only scoring.",
                 filepath, exc,

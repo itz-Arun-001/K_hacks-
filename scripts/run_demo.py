@@ -212,3 +212,4 @@ def run_stage_demo(auto=False):
 if __name__ == "__main__":
     auto_mode = "--auto" in sys.argv
     run_stage_demo(auto=auto_mode)
+

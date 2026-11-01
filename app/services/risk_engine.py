@@ -16,7 +16,10 @@ Integrated Pipeline:
 """
 
 import re
+import logging
 from typing import Dict, List, Any, Optional
+
+logger = logging.getLogger("safeloop.risk_engine")
 
 try:
     from sqlalchemy.orm import Session

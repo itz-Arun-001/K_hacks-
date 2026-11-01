@@ -6,7 +6,7 @@
 **Corpus Size:** **3,288 Labelled Samples** (50% Fraud / 50% Genuine)  
 **Training Split:** 2,613 samples (80%)  
 **Held-Out Test Split:** 675 samples (20%)  
-**Training Wall Time:** **0.31 seconds** on CPU  
+**Training Wall Time:** **0.09 seconds** on CPU  
 
 ---
 
@@ -54,7 +54,7 @@ Cross-validation confirms model generalizability across diverse linguistic distr
 ## 4. Key Architectural Strengths
 
 1. **Lightweight & CPU-Trained:**
-   Trained on a standard CPU in just **0.31 seconds**. Inference executes in under **45ms** without requiring expensive GPUs or cloud latency.
+   Trained on a standard CPU in just **0.09 seconds**. Inference executes in under **45ms** without requiring expensive GPUs or cloud latency.
 
 2. **Multilingual Transliteration Support:**
    Covers standard English, **Tanglish** (*"Amma urgent-ah GPay pannu, hospital bill kattanum"*), and **Hinglish** (*"Mummy jaldi paise bhejo police station me fasa hu"*).
