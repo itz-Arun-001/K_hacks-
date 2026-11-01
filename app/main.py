@@ -72,11 +72,11 @@ class RiskCheckResponse(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
-    entity_type: str = Field(..., description="upi_id, phone, link, or account")
-    entity_value: str = Field(..., description="Malicious or approved entity identifier")
-    verdict: str = Field(..., description="'BLOCK' or 'APPROVE'")
-    reporter_phone: Optional[str] = Field(default=None, description="Phone of family member")
-    reason: Optional[str] = Field(default="Family member blocked via WhatsApp Check B")
+    entity_type: str = Field(..., description="upi_id, phone, link, or account", max_length=32)
+    entity_value: str = Field(..., description="Malicious or approved entity identifier", max_length=256)
+    verdict: str = Field(..., description="'BLOCK' or 'APPROVE'", pattern="^(BLOCK|APPROVE)$")
+    reporter_phone: Optional[str] = Field(default=None, description="Phone of family member", max_length=32)
+    reason: Optional[str] = Field(default="Family member blocked via WhatsApp Check B", max_length=256)
 
 
 # ==============================================================================
@@ -134,6 +134,7 @@ def check_risk(payload: RiskCheckRequest, db: Session = Depends(get_db)):
 @app.get("/audit-logs")
 def view_audit_logs(limit: int = 50, db: Session = Depends(get_db)):
     """Fetches recent audit log entries (L8 compliance verification)."""
+    limit = max(1, min(limit, 500))  # Guard: clamp to [1, 500]
     logs = db.query(Event).order_by(Event.created_at.desc()).limit(limit).all()
     return [
         {
@@ -185,6 +186,7 @@ def list_flagged_entities(limit: int = 100, db: Session = Depends(get_db)):
     Threat Intelligence Query API (L5: Mule Network).
     Called by Person 3's Bank Mule Graph Console to visualize flagged hubs.
     """
+    limit = max(1, min(limit, 1000))  # Guard: clamp to [1, 1000]
     entities = db.query(FlaggedEntity).order_by(FlaggedEntity.created_at.desc()).limit(limit).all()
     return [
         {

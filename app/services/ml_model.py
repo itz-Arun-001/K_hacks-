@@ -20,7 +20,7 @@ Architecture:
 
 import os
 import math
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 
 try:
     import joblib
@@ -152,7 +152,7 @@ class SafeLoopRiskClassifier:
     ) -> float:
         """Returns calibrated probability P(scam | features) between 0.0 and 1.0."""
         if not self.is_trained or self.model is None or self.vectorizer is None:
-            return 0.5
+            return 0.0  # No evidence from ML; heuristic layers decide the final score
 
         entities = entities or {}
         X_text = self.vectorizer.transform([text or ""])
@@ -213,7 +213,13 @@ class SafeLoopRiskClassifier:
             instance.model = bundle.get("model")
             instance.is_trained = bundle.get("is_trained", False)
             return instance
-        except Exception:
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).error(
+                "[SafeLoop ML] Failed to load model from '%s': %s. "
+                "Falling back to heuristic-only scoring.",
+                filepath, exc,
+            )
             return None
 
 

@@ -49,7 +49,9 @@ def get_user_baseline(db: Session, user_id: int) -> Dict[str, Any]:
     count = len(amounts)
     mean_val = sum(amounts) / count
     variance = sum((x - mean_val) ** 2 for x in amounts) / count if count > 1 else 100.0
-    std_val = math.sqrt(variance)
+    # Floor std to 1.0 to prevent division-by-zero in z-score calculations when
+    # all historical payments are identical (e.g. a single recurring bill amount).
+    std_val = max(math.sqrt(variance), 1.0)
     max_val = max(amounts)
 
     known_payees = list({p.payee_identifier.lower().strip() for p in payments})

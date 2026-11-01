@@ -55,6 +55,10 @@ def log_event(
     )
     
     db.add(event)
-    db.commit()
+    # NOTE: We use flush() here, not commit(). This writes the row to the
+    # current transaction so the caller gets a valid event.id, but the actual
+    # COMMIT is left to the calling scope. This prevents double-commit issues
+    # when log_event is nested inside another transaction (e.g., record_family_feedback).
+    db.flush()
     db.refresh(event)
     return event

@@ -32,6 +32,16 @@ def record_family_feedback(
     if not db or not entity_value:
         return None
 
+    VALID_ENTITY_TYPES = {"upi_id", "upi", "phone", "link", "account", "email"}
+    if entity_type not in VALID_ENTITY_TYPES:
+        import logging
+        logging.getLogger(__name__).warning(
+            "[SafeLoop Retrainer] Unrecognised entity_type '%s'. "
+            "Accepted values: %s. Defaulting to 'upi_id'.",
+            entity_type, VALID_ENTITY_TYPES,
+        )
+        entity_type = "upi_id"
+
     clean_val = entity_value.strip().lower()
 
     if verdict.upper() == "BLOCK":

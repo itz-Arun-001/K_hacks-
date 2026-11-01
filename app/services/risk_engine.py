@@ -131,7 +131,7 @@ def evaluate_risk(
                 baseline_anomaly_score = baseline_result["anomaly_score"]
                 score += baseline_anomaly_score
                 reasons.extend(baseline_result["reasons"])
-        except (ValueError, TypeError, Exception):
+        except (ValueError, TypeError, AttributeError, KeyError):
             pass
     elif amounts:
         for amt in amounts:
@@ -185,9 +185,9 @@ def evaluate_risk(
                     score = max(score, 0.75)
                     reasons.append("Detected banking KYC suspension threat or fake refund lure.")
                 elif category == "urgency_triggers":
-                    score += 0.15
+                    score = max(score, score + 0.15)  # additive cap via max to avoid double-apply
                     reasons.append("Extreme urgency pressure detected ('act immediately to avoid action').")
-                break
+                break  # One reason per category per evaluation
 
     # --------------------------------------------------------------------------
     # 5. Suspicious Links & Phishing Indicators
