@@ -19,6 +19,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 from fastapi import FastAPI, Depends, HTTPException, Response
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -28,6 +29,8 @@ from app.services.risk_engine import evaluate_risk
 from app.services.retrainer import record_family_feedback, calculate_metrics
 from app.utils.audit import log_event
 from app.services.ml_model import get_ml_classifier, MODEL_PATH
+from app.services.guard import TwoKeyGuardService
+from app.services.stt import transcribe_voice_note
 
 # Structured application logger (replaces bare print() in services)
 logger = logging.getLogger("safeloop.api")
@@ -112,6 +115,31 @@ class FeedbackRequest(BaseModel):
 class ExplainRequest(BaseModel):
     text: Optional[str] = Field(default="", description="Message text to explain")
     entities: Optional[EntitiesSchema] = Field(default_factory=EntitiesSchema)
+
+class PaymentInitiateRequest(BaseModel):
+    user_id: int = Field(default=1, description="ID of the user initiating payment")
+    payee_identifier: str = Field(..., description="UPI ID, account number, or phone", max_length=128)
+    amount: float = Field(..., gt=0, description="Amount in INR")
+    for_family: bool = Field(default=False, description="Flag if payment is claimed to be for family/relative")
+    context_text: Optional[str] = Field(default=None, description="Optional chat or prompt context")
+
+
+class CheckARequest(BaseModel):
+    payment_id: int = Field(..., description="ID of the held payment")
+    secret_code: str = Field(..., description="Secret family code entered by Amma", max_length=128)
+
+
+class CheckBRequest(BaseModel):
+    payment_id: int = Field(..., description="ID of the held payment")
+    action: str = Field(..., description="'APPROVE', 'BLOCK', or 'CALL_HER'", pattern="^(APPROVE|BLOCK|CALL_HER|CALL)$")
+    reviewer_phone: Optional[str] = Field(default="+919876543211", description="Phone of approving family member")
+    reason: Optional[str] = Field(default="Family member decision via WhatsApp Check B", max_length=256)
+
+
+class STTRequest(BaseModel):
+    audio_path: str = Field(..., description="Path to local audio file (.ogg, .wav, .mp3)")
+    language_hint: Optional[str] = Field(default=None, description="Language code hint (e.g. 'en', 'ta', 'hi')")
+
 
 
 # ==============================================================================
@@ -531,3 +559,97 @@ def list_flagged_entities(limit: int = 100, db: Session = Depends(get_db)):
         }
         for e in entities
     ]
+
+
+# ==============================================================================
+# Person 2: Two-Key Payment Guard & STT Endpoints (Geerthiga)
+# ==============================================================================
+
+@app.post("/payment/initiate")
+def initiate_payment(payload: PaymentInitiateRequest, db: Session = Depends(get_db)):
+    """
+    Initiates payment and evaluates through the Two-Key Guard:
+    1. If payee is whitelisted -> Allowed instantly with 0 friction.
+    2. If payee is unverified / anomalous -> Held in Escrow.
+    3. If for_family=True -> Check A (secret code) required first.
+    4. Otherwise -> Check B (Son's interactive WhatsApp approval) required.
+    """
+    try:
+        return TwoKeyGuardService.initiate_payment(
+            db=db,
+            user_id=payload.user_id,
+            payee_identifier=payload.payee_identifier,
+            amount=payload.amount,
+            for_family=payload.for_family,
+            context_text=payload.context_text
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/payment/check-a")
+def verify_check_a(payload: CheckARequest, db: Session = Depends(get_db)):
+    """
+    Check A: Verifies secret family code (bcrypt hash match with 3-attempt lockout).
+    A correct code unlocks Check B (it NEVER releases funds on its own).
+    """
+    try:
+        return TwoKeyGuardService.evaluate_check_a(
+            db=db,
+            payment_id=payload.payment_id,
+            secret_code_input=payload.secret_code
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/payment/check-b")
+def verify_check_b(payload: CheckBRequest, db: Session = Depends(get_db)):
+    """
+    Check B: Ingests family guardian's WhatsApp decision (APPROVE, BLOCK, CALL_HER).
+    - APPROVE -> Releases payment.
+    - BLOCK -> Aborts payment ($0 loss) & permanently blacklists payee via Active Learning.
+    """
+    try:
+        return TwoKeyGuardService.evaluate_check_b(
+            db=db,
+            payment_id=payload.payment_id,
+            action=payload.action,
+            reviewer_phone=payload.reviewer_phone,
+            reason=payload.reason
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/payment/{payment_id}/status")
+def get_payment_lifecycle(payment_id: int, db: Session = Depends(get_db)):
+    """Fetches the real-time lifecycle state and approval history for a payment."""
+    try:
+        return TwoKeyGuardService.get_payment_status(db=db, payment_id=payment_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.post("/stt/transcribe")
+def transcribe_audio_endpoint(payload: STTRequest):
+    """
+    Speech-to-Text Endpoint (Whisper Integration).
+    Transcribes inbound audio voice notes (.ogg, .wav, .mp3) into text for Risk Engine evaluation.
+    """
+    try:
+        return transcribe_voice_note(payload.audio_path, language_hint=payload.language_hint)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Transcription error: {str(e)}")
+
+
+@app.get("/guard-ui", response_class=HTMLResponse)
+def serve_guard_ui():
+    """Serves the interactive SafeLoop Two-Key Family Guard Web Demonstration UI."""
+    html_path = os.path.join(os.path.dirname(__file__), "static", "guard_demo.html")
+    if os.path.exists(html_path):
+        with open(html_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    return HTMLResponse(content="<h1>Guard UI file not found</h1>", status_code=404)

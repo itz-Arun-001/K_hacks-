@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SafeLoop Two-Key Family Guard — Interactive Stage Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --primary: #3b82f6;
+      --safe: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-live { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid #059669; }
+    .badge-held { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #d97706; }
+    .badge-blocked { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #dc2626; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .icon-user { background: #1e3a8a; color: #93c5fd; }
+    .icon-shield { background: #701a75; color: #f472b6; }
+    .icon-guard { background: #064e3b; color: #6ee7b7; }
+
+    .card-title { font-size: 16px; font-weight: 700; }
+    .card-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    .presets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn-preset {
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #e5e7eb;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .btn-preset:hover { background: #374151; border-color: var(--primary); }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-input {
+      width: 100%;
+      background: #0b0f19;
+      border: 1px solid #374151;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .form-input:focus { outline: none; border-color: var(--primary); }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #d1d5db;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #1d4ed8; }
+
+    /* Shield State Area */
+    .shield-display {
+      text-align: center;
+      padding: 24px 16px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px dashed var(--card-border);
+      margin-bottom: 16px;
+    }
+    .shield-status-icon { font-size: 48px; margin-bottom: 8px; }
+    .shield-status-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .shield-status-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+    .score-bar-container { margin: 16px 0; }
+    .score-bar {
+      height: 8px;
+      background: #374151;
+      border-radius: 9999px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+    .score-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--safe);
+      transition: width 0.4s ease, background 0.4s ease;
+    }
+
+    .reasons-box {
+      background: #0b0f19;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 12px;
+      max-height: 160px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .reasons-box li { margin-left: 16px; margin-bottom: 4px; color: #e5e7eb; }
+
+    /* Check A Section */
+    .check-box {
+      border: 1px solid #374151;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: auto;
+      background: rgba(31, 41, 55, 0.4);
+    }
+    .check-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+
+    /* WhatsApp Simulator */
+    .wa-screen {
+      background: #075e54;
+      background-image: radial-gradient(#128c7e 1px, transparent 1px);
+      background-size: 16px 16px;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 360px;
+      overflow-y: auto;
+    }
+    .wa-bubble {
+      background: #1f2c34;
+      color: #e9edef;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      max-width: 95%;
+    }
+    .wa-bubble-alert {
+      border-left: 4px solid var(--danger);
+    }
+    .wa-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .btn-wa-block {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-wa-block:hover { background: #b91c1c; }
+    .btn-wa-approve {
+      background: #059669;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-wa-approve:hover { background: #047857; }
+    .btn-wa-call {
+      background: #4b5563;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .log-stream {
+      margin-top: 24px;
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>🛡️ SafeLoop Two-Key Family Guard</h1>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+        Live Interactive Demonstration of Layer 4 (Protect) & Layer 6 (Active Learning)
+      </p>
+    </div>
+    <div>
+      <span class="badge badge-live" id="system-status">● Two-Key Guard Ready</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- PANEL 1: Amma's UPI Payment Simulator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-user">👵</div>
+        <div>
+          <div class="card-title">Amma's Payment Screen</div>
+          <div class="card-subtitle">User: Lakshmi Raman (+919876543210)</div>
+        </div>
+      </div>
+
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">
+        Demo Preset Scenarios:
+      </div>
+      <div class="presets">
+        <button class="btn-preset" onclick="loadPreset('milk')">
+          🥛 Anand Milk<br><span style="color: #34d399;">₹450 (Whitelisted)</span>
+        </button>
+        <button class="btn-preset" onclick="loadPreset('eb')">
+          ⚡ TNEB Power<br><span style="color: #34d399;">₹850 (Normal Bill)</span>
+        </button>
+        <button class="btn-preset" onclick="loadPreset('scam')">
+          🚨 Digital Arrest<br><span style="color: #f87171;">₹50,000 (CBI Scam)</span>
+        </button>
+        <button class="btn-preset" onclick="loadPreset('hospital')">
+          🏥 Hospital Friend<br><span style="color: #fbbf24;">₹20,000 (Relative)</span>
+        </button>
+      </div>
+
+      <form id="payment-form" onsubmit="handlePaymentSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Payee Identifier (UPI / Phone)</label>
+          <input type="text" id="payee-input" class="form-input" required placeholder="e.g. clearance.cop@sbi" value="clearance.cop@sbi">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount (INR ₹)</label>
+          <input type="number" id="amount-input" class="form-input" required placeholder="50000" value="50000">
+        </div>
+        <div class="checkbox-group">
+          <input type="checkbox" id="family-check">
+          <label for="family-check">Caller claims to be family/relative (Requires Check A)</label>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btn-pay">Pay with UPI</button>
+      </form>
+    </div>
+
+    <!-- PANEL 2: SafeLoop Two-Key Guard Engine -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-shield">🛡️</div>
+        <div>
+          <div class="card-title">Two-Key Guard Engine</div>
+          <div class="card-subtitle">L3 Decide + L4 Protect State Machine</div>
+        </div>
+      </div>
+
+      <div class="shield-display" id="shield-display">
+        <div class="shield-status-icon" id="shield-icon">💤</div>
+        <div class="shield-status-title" id="shield-title">Awaiting Transaction</div>
+        <div class="shield-status-desc" id="shield-desc">Select a preset or initiate a payment to witness real-time fraud interception.</div>
+      </div>
+
+      <div class="score-bar-container">
+        <div style="display: flex; justify-content: space-between; font-size: 12px;">
+          <span>Risk Probability Score:</span>
+          <span id="score-text" style="font-weight: 700; font-family: 'JetBrains Mono', monospace;">0.00</span>
+        </div>
+        <div class="score-bar">
+          <div class="score-bar-fill" id="score-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="reasons-box">
+        <div style="font-weight: 700; margin-bottom: 6px; color: var(--text-muted);">Engine Evidence Log:</div>
+        <ul id="reasons-list">
+          <li style="color: #64748b;">No active transaction in pipeline.</li>
+        </ul>
+      </div>
+
+      <!-- Check A Widget -->
+      <div class="check-box" id="check-a-box" style="display: none;">
+        <div class="check-title">
+          <span>🔑 Check A: Secret Family Code</span>
+          <span style="margin-left: auto; font-size: 11px; color: #fbbf24;" id="check-a-attempts">3 tries left</span>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">
+          Amma asks the caller for the family secret code agreed offline (Secret: <code>anandham</code>).
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="check-a-input" class="form-input" style="padding: 8px 10px;" placeholder="Enter secret code (e.g. anandham)">
+          <button class="btn-primary" style="width: auto; padding: 8px 16px;" onclick="submitCheckA()">Verify</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 3: Son Rahul's WhatsApp Simulator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-guard">📱</div>
+        <div>
+          <div class="card-title">Rahul's WhatsApp (Check B)</div>
+          <div class="card-subtitle">Guardian Channel: +919876543211</div>
+        </div>
+      </div>
+
+      <div class="wa-screen" id="wa-screen">
+        <div class="wa-bubble">
+          <span style="color: #34d399; font-weight: 600;">SafeLoop Guardian Shield:</span><br>
+          No pending approvals. All protected elderly users are currently safe.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-stream" id="log-stream">
+    [SafeLoop Core Engine] System initialized. Dual-key state machine active. Database: SQLite/Neon ready.
+  </div>
+
+  <script>
+    let activePaymentId = null;
+
+    function log(msg) {
+      const stream = document.getElementById('log-stream');
+      const time = new Date().toLocaleTimeString();
+      stream.innerText = `[${time}] ${msg}\n` + stream.innerText;
+    }
+
+    function loadPreset(type) {
+      const payee = document.getElementById('payee-input');
+      const amount = document.getElementById('amount-input');
+      const familyCheck = document.getElementById('family-check');
+
+      if (type === 'milk') {
+        payee.value = 'anand.milk@upi';
+        amount.value = 450;
+        familyCheck.checked = false;
+      } else if (type === 'eb') {
+        payee.value = 'tneb.bill@sbi';
+        amount.value = 850;
+        familyCheck.checked = false;
+      } else if (type === 'scam') {
+        payee.value = 'clearance.cop@sbi';
+        amount.value = 50000;
+        familyCheck.checked = false;
+      } else if (type === 'hospital') {
+        payee.value = 'hospital.emergency@upi';
+        amount.value = 20000;
+        familyCheck.checked = true;
+      }
+    }
+
+    async function handlePaymentSubmit(e) {
+      e.preventDefault();
+      const payee = document.getElementById('payee-input').value;
+      const amount = parseFloat(document.getElementById('amount-input').value);
+      const forFamily = document.getElementById('family-check').checked;
+
+      log(`Initiating payment of ₹${amount} to ${payee}...`);
+
+      try {
+        const res = await fetch('/payment/initiate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: 1,
+            payee_identifier: payee,
+            amount: amount,
+            for_family: forFamily
+          })
+        });
+
+        const data = await res.json();
+        activePaymentId = data.payment_id;
+        renderGuardState(data);
+      } catch (err) {
+        log(`Error: ${err.message}`);
+      }
+    }
+
+    function renderGuardState(data) {
+      const icon = document.getElementById('shield-icon');
+      const title = document.getElementById('shield-title');
+      const desc = document.getElementById('shield-desc');
+      const scoreText = document.getElementById('score-text');
+      const scoreFill = document.getElementById('score-bar-fill');
+      const reasonsList = document.getElementById('reasons-list');
+      const checkABox = document.getElementById('check-a-box');
+
+      scoreText.innerText = (data.risk_score || 0).toFixed(2);
+      const pct = Math.min((data.risk_score || 0) * 100, 100);
+      scoreFill.style.width = `${pct}%`;
+
+      if (data.risk_score >= 0.70) {
+        scoreFill.style.background = '#ef4444';
+      } else if (data.risk_score >= 0.35) {
+        scoreFill.style.background = '#f59e0b';
+      } else {
+        scoreFill.style.background = '#10b981';
+      }
+
+      reasonsList.innerHTML = (data.reasons && data.reasons.length > 0)
+        ? data.reasons.map(r => `<li>${r}</li>`).join('')
+        : '<li>No fraud indicators detected. Transaction safe.</li>';
+
+      if (data.status === 'allowed') {
+        icon.innerText = '✅';
+        title.innerText = 'PAYMENT APPROVED (FAST-PATH)';
+        title.style.color = '#34d399';
+        desc.innerText = 'Payee is recognized as a trusted shop/utility. Zero friction released.';
+        checkABox.style.display = 'none';
+        clearWhatsApp();
+        log(`Payment #${data.payment_id} allowed instantly.`);
+      } else if (data.status === 'held') {
+        icon.innerText = '⏸️';
+        title.innerText = 'PAYMENT HELD IN ESCROW';
+        title.style.color = '#fbbf24';
+        desc.innerText = 'High risk / novel payee detected! Two-Key Guard engaged to protect funds.';
+        log(`Payment #${data.payment_id} HELD behind Two-Key Guard (Risk: ${data.risk_score}).`);
+
+        if (data.next_step === 'check_a') {
+          checkABox.style.display = 'block';
+          renderWhatsAppPendingCode();
+        } else {
+          checkABox.style.display = 'none';
+          renderWhatsAppApproval(data);
+        }
+      } else if (data.status === 'blocked') {
+        icon.innerText = '🚫';
+        title.innerText = 'TRANSACTION BLOCKED';
+        title.style.color = '#ef4444';
+        desc.innerText = 'Payment safely terminated. Zero money lost.';
+        checkABox.style.display = 'none';
+      }
+    }
+
+    async function submitCheckA() {
+      const codeInput = document.getElementById('check-a-input').value;
+      if (!codeInput || !activePaymentId) return;
+
+      log(`Submitting Check A code '${codeInput}' for Payment #${activePaymentId}...`);
+
+      try {
+        const res = await fetch('/payment/check-a', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payment_id: activePaymentId,
+            secret_code: codeInput
+          })
+        });
+
+        const data = await res.json();
+        log(data.message);
+
+        if (data.success) {
+          document.getElementById('check-a-box').style.display = 'none';
+          renderWhatsAppApproval({
+            payment_id: activePaymentId,
+            amount: document.getElementById('amount-input').value,
+            payee_identifier: document.getElementById('payee-input').value
+          });
+        } else {
+          document.getElementById('check-a-attempts').innerText = `${data.remaining_attempts || 0} tries left`;
+          if (data.payment_status === 'blocked') {
+            document.getElementById('shield-icon').innerText = '🔒';
+            document.getElementById('shield-title').innerText = 'LOCKED OUT';
+            document.getElementById('shield-title').style.color = '#ef4444';
+            document.getElementById('shield-desc').innerText = data.message;
+            document.getElementById('check-a-box').style.display = 'none';
+          }
+        }
+      } catch (err) {
+        log(`Check A Error: ${err.message}`);
+      }
+    }
+
+    function renderWhatsAppApproval(data) {
+      const screen = document.getElementById('wa-screen');
+      screen.innerHTML = `
+        <div class="wa-bubble wa-bubble-alert">
+          <b style="color: #f87171;">🚨 SafeLoop Security Alert</b><br>
+          Amma is attempting to transfer <b>₹${data.amount || '50,000'}</b> to <code>${data.payee_identifier || 'clearance.cop@sbi'}</code>.<br><br>
+          <span style="color: #fca5a5;">⚠️ Risk Engine Warning: Potential digital arrest coercion or unverified recipient.</span>
+          <div class="wa-actions">
+            <button class="btn-wa-block" onclick="submitCheckB('BLOCK')">⛔ BLOCK TRANSACTION</button>
+            <button class="btn-wa-approve" onclick="submitCheckB('APPROVE')">✅ APPROVE PAYMENT</button>
+            <button class="btn-wa-call" onclick="submitCheckB('CALL_HER')">📞 CALL AMMA FIRST</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWhatsAppPendingCode() {
+      const screen = document.getElementById('wa-screen');
+      screen.innerHTML = `
+        <div class="wa-bubble">
+          <b style="color: #fbbf24;">🔑 Check A in Progress</b><br>
+          Amma's screen is currently validating the offline secret family code.<br>
+          Once entered, Check B interactive approval will appear here.
+        </div>
+      `;
+    }
+
+    function clearWhatsApp() {
+      const screen = document.getElementById('wa-screen');
+      screen.innerHTML = `
+        <div class="wa-bubble">
+          <span style="color: #34d399; font-weight: 600;">SafeLoop Guardian Shield:</span><br>
+          Transaction allowed with zero friction. No alerts needed.
+        </div>
+      `;
+    }
+
+    async function submitCheckB(action) {
+      if (!activePaymentId) return;
+
+      log(`Son Rahul selected Check B action: '${action}'...`);
+
+      try {
+        const res = await fetch('/payment/check-b', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payment_id: activePaymentId,
+            action: action,
+            reviewer_phone: '+919876543211',
+            reason: 'Son intervened via WhatsApp Check B'
+          })
+        });
+
+        const data = await res.json();
+        log(data.message);
+
+        const screen = document.getElementById('wa-screen');
+        if (action === 'BLOCK') {
+          document.getElementById('shield-icon').innerText = '🛡️';
+          document.getElementById('shield-title').innerText = 'TRANSACTION BLOCKED (0 LOSS)';
+          document.getElementById('shield-title').style.color = '#34d399';
+          document.getElementById('shield-desc').innerText = `Rahul blocked the transfer. Entity '${data.blacklisted_entity}' permanently added to cybercrime blocklist.`;
+
+          screen.innerHTML = `
+            <div class="wa-bubble" style="border-left: 4px solid #34d399;">
+              <b style="color: #34d399;">✅ Transaction Aborted</b><br>
+              Payment blocked successfully. Amma has been alerted to hang up the phone.<br><br>
+              <i>Threat intel updated: Blacklisted <code>${data.blacklisted_entity}</code> globally.</i>
+            </div>
+          `;
+        } else if (action === 'APPROVE') {
+          document.getElementById('shield-icon').innerText = '💸';
+          document.getElementById('shield-title').innerText = 'PAYMENT RELEASED';
+          document.getElementById('shield-title').style.color = '#34d399';
+          document.getElementById('shield-desc').innerText = 'Payment released safely upon family guardian approval.';
+
+          screen.innerHTML = `
+            <div class="wa-bubble" style="border-left: 4px solid #34d399;">
+              <b style="color: #34d399;">✅ Payment Released</b><br>
+              Transaction completed securely.
+            </div>
+          `;
+        }
+      } catch (err) {
+        log(`Check B Error: ${err.message}`);
+      }
+    }
+  </script>
+</body>
+</html>
+
