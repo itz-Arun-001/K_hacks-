@@ -655,6 +655,19 @@
               Transaction completed securely.
             </div>
           `;
+        } else if (action === 'CALL_HER') {
+          document.getElementById('shield-icon').innerText = '📞';
+          document.getElementById('shield-title').innerText = 'TELEPHONE CONTACT REQUESTED';
+          document.getElementById('shield-title').style.color = '#fbbf24';
+          document.getElementById('shield-desc').innerText = 'Rahul requested telephone contact. Amma instructed to wait for Rahul\'s phone call. Escrow lock preserved.';
+
+          screen.innerHTML = `
+            <div class="wa-bubble" style="border-left: 4px solid #fbbf24;">
+              <b style="color: #fbbf24;">📞 Call Initiated</b><br>
+              Rahul is calling Amma on her saved number (+919876543210).<br><br>
+              <i>Escrow lock safely holds funds during the phone call.</i>
+            </div>
+          `;
         }
       } catch (err) {
         log(`Check B Error: ${err.message}`);

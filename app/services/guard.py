@@ -1,6 +1,6 @@
 """
 SafeLoop Two-Key Payment Guard State Machine (L4: Protect)
-Owned by: Person 2 (Geerthiga)
+Owned by: Person 2 (Geerthiga) & Person 4 (Arun)
 
 The Two-Key Guard protects elderly users (Amma / Appa) from coerced financial transactions:
 1. Whitelist Fast-Path: Trusted payees (milkman, electricity, approved shops) pass instantly with 0 friction.
@@ -12,6 +12,8 @@ The Two-Key Guard protects elderly users (Amma / Appa) from coerced financial tr
    - A correct Check A code NEVER releases money on its own; Check B is authoritative.
    - If Rahul replies BLOCK, the transaction is cancelled and the payee is automatically elevated
      to the global cybercrime blocklist via Person 4's active learning retrainer.
+5. Cooling-off & 10-Minute Escalation: If primary contact does not respond in 10 minutes,
+   alerts secondary contact and preserves the escrow hold.
 """
 
 import os
@@ -34,11 +36,11 @@ from app.utils.audit import log_event
 logger = logging.getLogger("safeloop.guard")
 
 MAX_CHECK_A_ATTEMPTS = 3
-DEFAULT_COOLING_OFF_MINUTES = 15
+DEFAULT_COOLING_OFF_MINUTES = 10
 
 
 class TwoKeyGuardService:
-    """Manages the full lifecycle of payment holds, Check A, and Check B verifications."""
+    """Manages the full lifecycle of payment holds, Check A, Check B, and cooling-off timers."""
 
     @staticmethod
     def hash_family_code(plain_code: str) -> str:
@@ -83,6 +85,11 @@ class TwoKeyGuardService:
             - guardian_contact: Optional[Dict]
         """
         clean_payee = (payee_identifier or "").strip().lower()
+        if not clean_payee:
+            raise ValueError("Payee identifier cannot be blank or empty.")
+
+        if amount is None or amount <= 0:
+            raise ValueError("Payment amount must be greater than zero.")
 
         # Fetch user
         user = db.query(User).filter(User.id == user_id).first()
@@ -216,7 +223,7 @@ class TwoKeyGuardService:
         # ----------------------------------------------------------------------
         # 4. Payment is HELD -> Determine whether Check A or Check B is next
         # ----------------------------------------------------------------------
-        # Fetch family contact (Guardian)
+        # Fetch family contact (Guardian Priority 1)
         family_member = db.query(FamilyContact).filter(
             FamilyContact.user_id == user_id
         ).order_by(FamilyContact.priority.asc()).first()
@@ -296,11 +303,19 @@ class TwoKeyGuardService:
         if not payment:
             raise ValueError(f"Payment ID {payment_id} does not exist.")
 
-        if payment.status != "held":
+        if payment.status in ["released", "blocked"]:
             return {
                 "success": False,
                 "payment_status": payment.status,
-                "message": f"Payment is already '{payment.status}'. Cannot evaluate Check A."
+                "message": f"Payment #{payment_id} is already '{payment.status}'. Lifecycle state is finalized."
+            }
+
+        clean_code = (secret_code_input or "").strip()
+        if not clean_code:
+            return {
+                "success": False,
+                "payment_status": payment.status,
+                "message": "Secret code cannot be blank or empty."
             }
 
         # Find Check A approval record
@@ -310,7 +325,6 @@ class TwoKeyGuardService:
         ).first()
 
         if not approval:
-            # Create if missing
             approval = Approval(
                 payment_id=payment_id,
                 check_type="check_a",
@@ -322,7 +336,7 @@ class TwoKeyGuardService:
             db.commit()
             db.refresh(approval)
 
-        # Check for lockout
+        # Check for existing lockout
         if approval.attempts >= MAX_CHECK_A_ATTEMPTS:
             payment.status = "blocked"
             approval.status = "rejected"
@@ -360,7 +374,7 @@ class TwoKeyGuardService:
 
         # Increment attempt count
         approval.attempts += 1
-        is_match = cls.verify_family_code(secret_code_input, family_member.family_code_hash)
+        is_match = cls.verify_family_code(clean_code, family_member.family_code_hash)
 
         if is_match:
             approval.status = "approved"
@@ -444,7 +458,16 @@ class TwoKeyGuardService:
         if not payment:
             raise ValueError(f"Payment ID {payment_id} does not exist.")
 
-        action_upper = action.strip().upper()
+        # State Machine Finality Guard: Cannot re-modify an already completed transaction
+        if payment.status in ["released", "blocked"]:
+            return {
+                "success": False,
+                "action": "FINALIZED",
+                "payment_status": payment.status,
+                "message": f"Payment #{payment_id} is already '{payment.status}'. Lifecycle state is finalized and cannot be modified."
+            }
+
+        action_upper = (action or "").strip().upper()
 
         approval = db.query(Approval).filter(
             Approval.payment_id == payment_id,
@@ -493,12 +516,22 @@ class TwoKeyGuardService:
             approval.status = "rejected"
             db.commit()
 
-            # Active Learning Loop: Add entity to threat intelligence blocklist!
+            # Dynamic entity type categorization
+            clean_val = payment.payee_identifier.lower().strip()
+            if clean_val.startswith("http://") or clean_val.startswith("https://"):
+                entity_type = "link"
+            elif "@" in clean_val:
+                entity_type = "upi_id"
+            elif clean_val.replace("+", "").isdigit() and len(clean_val.replace("+", "")) <= 13:
+                entity_type = "phone"
+            else:
+                entity_type = "account"
+
             block_reason = reason or "Family member blocked transfer via WhatsApp Check B"
             flagged = record_family_feedback(
                 db=db,
-                entity_type="upi_id" if "@" in payment.payee_identifier else "phone",
-                entity_value=payment.payee_identifier,
+                entity_type=entity_type,
+                entity_value=clean_val,
                 verdict="BLOCK",
                 reporter_phone=reviewer_phone,
                 reason=block_reason
@@ -521,8 +554,8 @@ class TwoKeyGuardService:
                 "success": True,
                 "action": "BLOCKED",
                 "payment_status": "blocked",
-                "blacklisted_entity": payment.payee_identifier,
-                "message": f"🚨 Family member blocked the payment. Transaction aborted ($0 loss). Payee '{payment.payee_identifier}' added to national threat blocklist."
+                "blacklisted_entity": clean_val,
+                "message": f"🚨 Family member blocked the payment. Transaction aborted ($0 loss). Payee '{clean_val}' added to national threat blocklist."
             }
 
         elif action_upper in ["CALL_HER", "CALL"]:
@@ -545,6 +578,85 @@ class TwoKeyGuardService:
 
         else:
             raise ValueError(f"Invalid Check B action '{action}'. Expected 'APPROVE', 'BLOCK', or 'CALL_HER'.")
+
+    @classmethod
+    def check_cooling_off_timeout(
+        cls,
+        db: Session,
+        payment_id: int,
+        timeout_minutes: int = DEFAULT_COOLING_OFF_MINUTES
+    ) -> Dict[str, Any]:
+        """
+        Layer 4 Cooling-off State: Evaluates whether a held payment has exceeded the 10-minute guardian reply window.
+        If exceeded without response, escalates to the secondary emergency contact (Priority 2)
+        and maintains the escrow HOLD (Cooling-off protection).
+        """
+        payment = db.query(Payment).filter(Payment.id == payment_id).first()
+        if not payment:
+            raise ValueError(f"Payment ID {payment_id} not found.")
+
+        if payment.status != "held":
+            return {
+                "timeout_triggered": False,
+                "status": payment.status,
+                "message": f"Payment is already '{payment.status}'."
+            }
+
+        approval = db.query(Approval).filter(
+            Approval.payment_id == payment_id,
+            Approval.check_type == "check_b"
+        ).first()
+
+        now = datetime.utcnow()
+        elapsed = (now - payment.created_at).total_seconds() / 60.0
+
+        if elapsed >= timeout_minutes and (not approval or approval.status in ["pending", "call_requested"]):
+            # Fetch secondary family contact (Priority 2)
+            fallback_contact = db.query(FamilyContact).filter(
+                FamilyContact.user_id == payment.user_id,
+                FamilyContact.priority == 2
+            ).first()
+
+            if fallback_contact:
+                if approval:
+                    approval.reviewer_phone = fallback_contact.contact_phone
+                log_event(
+                    db=db,
+                    event_type="COOLING_OFF_ESCALATED",
+                    details={
+                        "payment_id": payment_id,
+                        "elapsed_minutes": round(elapsed, 1),
+                        "fallback_phone": fallback_contact.contact_phone
+                    },
+                    user_id=str(payment.user_id)
+                )
+                db.commit()
+
+                return {
+                    "timeout_triggered": True,
+                    "elapsed_minutes": round(elapsed, 1),
+                    "action": "ESCALATED_TO_SECONDARY_GUARDIAN",
+                    "guardian": {
+                        "name": fallback_contact.contact_name,
+                        "phone": fallback_contact.contact_phone,
+                        "relation": fallback_contact.relation
+                    },
+                    "message": f"⏳ 10-minute timeout reached. Primary guardian did not reply. Escalated alert to secondary contact {fallback_contact.contact_name} ({fallback_contact.contact_phone}). Payment stays safely HELD."
+                }
+
+            return {
+                "timeout_triggered": True,
+                "elapsed_minutes": round(elapsed, 1),
+                "action": "COOLING_OFF_MAINTAINED",
+                "message": "⏳ 10-minute timeout reached. No secondary contact registered. Escrow cooling-off lock remains strictly ENFORCED."
+            }
+
+        return {
+            "timeout_triggered": False,
+            "elapsed_minutes": round(elapsed, 1),
+            "remaining_seconds": max(int((timeout_minutes * 60) - (elapsed * 60)), 0),
+            "message": "Pending guardian reply within normal response window."
+        }
 
     @classmethod
     def get_payment_status(cls, db: Session, payment_id: int) -> Dict[str, Any]:
@@ -574,4 +686,3 @@ class TwoKeyGuardService:
             "created_at": payment.created_at.isoformat(),
             "approvals": approvals_list
         }
-

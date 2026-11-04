@@ -213,6 +213,66 @@ def test_stt_voice_note_transcription():
     print("  [PASS] Voice note speech-to-text successfully transcribed.")
 
 
+def test_call_her_action_and_finality(db):
+    print("\n[Test 7: Check B CALL_HER & State Machine Finality Guard]")
+    init_res = TwoKeyGuardService.initiate_payment(
+        db=db,
+        user_id=1,
+        payee_identifier="suspicious.loan@okaxis",
+        amount=18000.0,
+        for_family=False
+    )
+    pid = init_res["payment_id"]
+
+    # 1. Action CALL_HER keeps payment held
+    call_res = TwoKeyGuardService.evaluate_check_b(db, pid, "CALL_HER")
+    assert call_res["action"] == "CALL_REQUESTED"
+    assert call_res["payment_status"] == "held"
+    print("  • Action CALL_HER executed -> Payment stays safely HELD.")
+
+    # 2. Son calls Amma, confirms scam, then BLOCKs
+    block_res = TwoKeyGuardService.evaluate_check_b(db, pid, "BLOCK", reason="Amma confirmed fake loan over call")
+    assert block_res["action"] == "BLOCKED"
+    assert block_res["payment_status"] == "blocked"
+    print("  • Follow-up BLOCK executed -> Payment is 'blocked'.")
+
+    # 3. Finality test: Once blocked, attacker cannot re-approve
+    flip_res = TwoKeyGuardService.evaluate_check_b(db, pid, "APPROVE")
+    assert flip_res["success"] is False
+    assert flip_res["payment_status"] == "blocked"
+    print("  • Finality Guard verified: Blocked payment cannot be flipped to released.")
+    print("  [PASS] CALL_HER and State Machine Finality verified.")
+
+
+def test_cooling_off_timeout_escalation(db):
+    print("\n[Test 8: Layer 4 Cooling-off 10-Minute Timeout Escalation]")
+    from datetime import datetime, timedelta
+    init_res = TwoKeyGuardService.initiate_payment(
+        db=db,
+        user_id=1,
+        payee_identifier="unresponsive.guardian@upi",
+        amount=12000.0,
+        for_family=False
+    )
+    pid = init_res["payment_id"]
+
+    # Check timeout before 10 min -> Normal
+    t_normal = TwoKeyGuardService.check_cooling_off_timeout(db, pid, timeout_minutes=10)
+    assert t_normal["timeout_triggered"] is False
+    print("  • Within 10 min: Normal window active.")
+
+    # Artificially age the payment created_at by 11 minutes
+    p = db.query(Payment).filter(Payment.id == pid).first()
+    p.created_at = datetime.utcnow() - timedelta(minutes=11)
+    db.commit()
+
+    # Now evaluate cooling-off timeout
+    t_timeout = TwoKeyGuardService.check_cooling_off_timeout(db, pid, timeout_minutes=10)
+    assert t_timeout["timeout_triggered"] is True
+    print(f"  • After 10 min without reply: Timeout triggered! ({t_timeout['action']})")
+    print("  [PASS] Cooling-off timer protection verified.")
+
+
 if __name__ == "__main__":
     init_db()
     db = SessionLocal()
@@ -222,7 +282,9 @@ if __name__ == "__main__":
     test_check_a_success_unlocks_check_b(db)
     test_check_b_block_and_community_immunity(db)
     test_stt_voice_note_transcription()
+    test_call_her_action_and_finality(db)
+    test_cooling_off_timeout_escalation(db)
     db.close()
     print("\n" + "=" * 70)
-    print(" [OK] ALL 6 TWO-KEY GUARD & STT TESTS PASSED WITH 100% SUCCESS!")
+    print(" [OK] ALL 8 TWO-KEY GUARD & STT TESTS PASSED WITH 100% SUCCESS!")
     print("=" * 70 + "\n")
