@@ -148,7 +148,7 @@
 
 | ROLE | NAME | STREAM / DEPT | YEAR | COLLEGE |
 | :--- | :--- | :--- | :---: | :--- |
-| **Person 1: WhatsApp Bot & Gemini Ingestion Lead** | **Aiman N** | Computer Science & Engineering | [Your Year] | College of Engineering Guindy, Anna University |
-| **Person 2: Two-Key Guard & Audio Services Lead** | **Geerthiga M** | Computer Science & Engineering | [Your Year] | College of Engineering Guindy, Anna University |
-| **Person 3: Graph Intelligence & Bank Console Lead** | **Monica G** | Computer Science & Engineering | [Your Year] | College of Engineering Guindy, Anna University |
-| **Person 4: Core Risk Engine & ML Architect** | **Arun S** | Computer Science & Engineering | [Your Year] | College of Engineering Guindy, Anna University |
+| **Person 1: WhatsApp Bot & Gemini Ingestion** | **Aiman N** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 2: Two-Key Guard & Audio Services** | **Geerthiga M** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 3: Graph Intelligence & Bank Console** | **Monica G** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 4: Core Risk Engine & ML Architecture** | **Arun S** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
