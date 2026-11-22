@@ -2,15 +2,15 @@
 **Event:** K! HACKS 4.0 (CEG Tech Forum, College of Engineering Guindy, Anna University, Chennai)  
 **Submission Type:** Online Round PPT Submission  
 **Problem Track:** Cyber Security / AI for Social Good / FinTech  
-**Project Name:** **SafeLoop** — Multilingual WhatsApp Scam Shield & Two-Key Family Guard for the Elderly  
+**Project Name:** **<project_name>** — Multilingual WhatsApp Scam Shield & Two-Key Family Guard for the Elderly  
 **Repository:** [https://github.com/itz-Arun-001/K_hacks-](https://github.com/itz-Arun-001/K_hacks-)
 
 ---
 
 ## Slide 1: Title & Overview
-- **Project Name:** SafeLoop
+- **Project Name:** <project_name>
 - **Subtitle:** Real-Time Multilingual WhatsApp Scam Shield & Two-Key Family Guard for India's Elderly
-- **Team Name:** SafeLoop
+- **Team Name:** <team_name>
 - **College Name:** College of Engineering Guindy, Anna University, Chennai
 - **Problem Track:** Cyber Security / AI for Social Good / FinTech
 
@@ -32,10 +32,10 @@
 ## Slide 3: Solution Abstract
 ### Zero-Friction Protection on WhatsApp Backed by Escrow Holds & Mule Ring Analytics
 
-- **What SafeLoop Is:**
+- **What <project_name> Is:**
   - An end-to-end protective ecosystem operating directly inside **WhatsApp** (the primary digital application used by Indian seniors), requiring **zero new app downloads** for the elderly user.
   - Analyzes incoming text messages, forwarded regional voice notes, and outbound payment requests to prevent coerced financial loss.
-- **Core Pillars of SafeLoop:**
+- **Core Pillars of <project_name>:**
   1. **Multimodal Ingestion & Zero-Day Coercion NLP:** Extracts entities (phones, UPI IDs, shortened links, amounts) and identifies coercive psychological triggers (urgency, authority, secrecy) using a calibrated **Scikit-Learn LinearSVC ML model** (trained on 3,288 labelled Indian scam messages, 99.70% accuracy) paired with Gemini 3 Flash explanation.
   2. **Two-Key Family Guard (L4 Protect):** High-risk or anomalous transfers to unverified payees are placed into a **10-minute cooling-off Escrow Hold** governed by two keys:
      - *Check A:* An offline secret family passkey (bcrypt-hashed with a strict 3-attempt lockout).
@@ -100,7 +100,7 @@
 ### Rigorous Experimental Benchmarks & Test Results
 *(Evaluated across 3,288 real-world scam training samples, 115 synthetic payment test vectors, and 11 adversarial red-team test attacks)*
 
-| Evaluation Dimension | Traditional Tools (Truecaller / SMS Filters) | SafeLoop Experimental Test Results |
+| Evaluation Dimension | Traditional Tools (Truecaller / SMS Filters) | <project_name> Experimental Test Results |
 | :--- | :---: | :---: |
 | **Zero-Day Scam Detection** | **14.3%** *(Cold-start fail: needs 500+ crowd reports)* | **100.0% Detection** on 10 zero-day test cases *(Semantic NLP catches coercion immediately)* |
 | **Coerced Transfer Protection** | **0.0%** *(Cannot intercept UPI/GPay transfers)* | **100% Escrow Interception** on 40 simulated attack vectors |
@@ -110,7 +110,7 @@
 
 ### Unique Selling Points (USPs):
 1. **Zero New App Installation for Seniors:** Operates directly inside WhatsApp with multimodal support for regional voice notes (**Tamil, Hindi, English**).
-2. **Two-Key Cryptographic Circuit Breaker:** Unlike passive caller-ID apps that only warn after the fact, SafeLoop **physically pauses payment execution in escrow**. Even if a scammer tricks Amma into revealing her secret code, Check B requires out-of-band approval from the registered family member's smartphone.
+2. **Two-Key Cryptographic Circuit Breaker:** Unlike passive caller-ID apps that only warn after the fact, <project_name> **physically pauses payment execution in escrow**. Even if a scammer tricks Amma into revealing her secret code, Check B requires out-of-band approval from the registered family member's smartphone.
 3. **Local Hybrid Architecture (ML + Rules + LLM):** Core evaluation runs locally in $<16\text{ ms}$ on a lightweight Calibrated LinearSVC model; Gemini LLM is used only for explanation, ensuring resilience even during network throttling.
 4. **Community Immunity Closed Loop:** When one guardian marks `BLOCK`, the scammer's UPI ID / phone number is written to an in-memory threat list in $<15\text{ ms}$, immediately protecting all other protected families in the network.
 
