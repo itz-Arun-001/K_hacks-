@@ -48,44 +48,47 @@
 ## Slide 4: Architecture and System Design
 
 ```
-                     ┌──────────────────────────────────────────────┐
-                     │   Inbound Channel: WhatsApp (Twilio API)    │
-                     │  (Text Messages, Voice Notes, UPI Payees)    │
-                     └──────────────────────┬───────────────────────┘
-                                            │
-                                            ▼
-                     ┌──────────────────────────────────────────────┐
-                     │ L1 & L2: Multimodal Ingestion & Feature Extr │
-                     │ • Whisper Speech-to-Text (Ta / Hi / En)      │
-                     │ • High-Precision Regex (Phone, UPI, URLs)    │
-                     │ • Gemini 3 Flash Parser (PII-Redacted Prompt)│
-                     └──────────────────────┬───────────────────────┘
-                                            │
-                                            ▼
-                     ┌──────────────────────────────────────────────┐
-                     │ L3: 8-Layer Risk Assessment Engine (Core ML) │
-                     │ • Calibrated LinearSVC (3,288 corpus samples)│
-                     │ • Dynamic Baseline Profiler (z-score ratio)  │
-                     │ • Fast Heuristics (Urgency, Threat, Imperson)│
-                     └──────────────────────┬───────────────────────┘
-                                            │ (If Risk Level >= High)
-                                            ▼
-                     ┌──────────────────────────────────────────────┐
-                     │ L4: Two-Key Family Guard & Escrow Hold       │
-                     │ • Check A: Offline Family Code (bcrypt hash) │
-                     │ • Check B: Son/Daughter WhatsApp [BLOCK/APP] │
-                     │ • 10-Minute Cooling-Off & Auto-Escalation    │
-                     └──────────────────────┬───────────────────────┘
-                                            │
-                         ┌──────────────────┴──────────────────┐
-                         ▼                                     ▼
-        ┌───────────────────────────────────┐ ┌──────────────────────────────────┐
-        │ L5: Bank Mule Graph Intelligence  │ │ L6: Active Learning Retrainer    │
-        │ • Directed Graph Analysis (20/20) │ │ • Dynamic Community Immunity     │
-        │ • Smurfing Hubs & 5-Hop Layering  │ │ • Instant Global UPI Blacklist   │
-        │ • Streamlit Forensic Bank Console │ │ • Retrains in Memory < 15ms      │
-        └───────────────────────────────────┘ └──────────────────────────────────┘
++---------------------------------------------------------------------------------------------------------+
+|                                    TIER 1: MULTIMODAL INGESTION LAYER                                    |
+|   • WhatsApp Business API (Twilio Webhook)  • Regional Voice Note Transcriber (Whisper: Ta/Hi/En)       |
+|   • High-Precision Regex Parser (UPI handles, 10-digit phones, .xyz/.top phishing URLs, amounts)        |
++---------------------------------------------------------------------------------------------------------+
+                                                     │
+                                                     ▼
++---------------------------------------------------------------------------------------------------------+
+|                                  TIER 2: AI & DECISION INTELLIGENCE CORE                                 |
+|   • Privacy Gate: In-Flight PII Redactor (<PHONE>, <UPI> tokenization before external calls)             |
+|   • Calibrated LinearSVC Classifier: Trained on 3,288 Indian scam samples (99.70% accuracy)             |
+|   • Dynamic Behavioral Profiler: Tracks 30-day user payment history (mean μ, std σ, z-score spikes)     |
+|   • Fast Threat Heuristic Rules: Urgency, Authority, Secrecy, Digital Arrest keyword patterns           |
+|   • Gemini 3 Flash Explainer: Generates simple 2-sentence advice in victim's local language             |
++---------------------------------------------------------------------------------------------------------+
+                                                     │ (If Risk Score >= 0.70 or Unknown Payee)
+                                                     ▼
++---------------------------------------------------------------------------------------------------------+
+|                                TIER 3: TWO-KEY ESCROW PROTECTION GATEWAY                                |
+|   • Automatic Escrow Hold: Intercepts and pauses fraudulent outbound payment transfers                 |
+|   • Check A (User Authentication): Offline secret family passkey (bcrypt-hashed, 3-attempt lockout)     |
+|   • Check B (Guardian Consensus): Out-of-band interactive WhatsApp alert dispatched to family member    |
+|   • Fail-Safe Escalation: 10-min cooling-off preserves escrow; escalates to secondary guardian           |
++---------------------------------------------------------------------------------------------------------+
+                                                     │
+                                                     ├─────────────────────────────────────────┐
+                                                     ▼ (On Guardian BLOCK)                     ▼
++---------------------------------------------------------------+ +---------------------------------------+
+|              TIER 4A: ACTIVE LEARNING RETRAINER               | |  TIER 4B: BANK MULE GRAPH INTELLIGENCE|
+| • Sub-15ms Threat Table Hot-Reload: Instantly writes blocked  | | • In-Memory Directed Graph Engine     |
+|   UPI/phone to global FlaggedEntity registry.                 | | • Smurfing & Fan-In/Out Hub Tracing   |
+| • Community Immunity: Protects all subsequent users nationwide| | • 3-to-5 Hop Rapid Layering Detection |
+|   before funds can be solicited again.                        | | • Streamlit Forensic Compliance UI    |
++---------------------------------------------------------------+ +---------------------------------------+
 ```
+
+### Key Architectural Pillars:
+1. **Sub-16ms Edge Scoring:** Core risk evaluation runs locally on CPU via our Calibrated LinearSVC classifier and statistical baseline profiler, ensuring zero dependency on cloud latency.
+2. **Defense-in-Depth:** Heuristic triggers, mathematical anomalies, and deterministic blacklists run independently of LLM prompts—neutralizing prompt-injection jailbreaks.
+3. **Cryptographic Two-Key Consensus:** Financial transactions under coercion cannot be unlocked by the victim alone; Check B requires an independent family decision on an out-of-band channel.
+4. **Zero-Friction Fast-Path:** Legitimate daily payments (milkman, utilities, groceries) pass instant whitelist validation in $<15\text{ ms}$ with zero user friction.
 
 - **Technical Stack:**
   - **Backend Core:** FastAPI, Python 3.11+, SQLAlchemy, SQLite / PostgreSQL.
