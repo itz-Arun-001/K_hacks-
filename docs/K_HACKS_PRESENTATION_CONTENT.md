@@ -1,27 +1,30 @@
 # K! HACKS 4.0 — Presentation Deck Content
+
 **Event:** K! HACKS 4.0 (CEG Tech Forum, College of Engineering Guindy, Anna University, Chennai)  
 **Submission Type:** Online Round PPT Submission  
 **Problem Track:** Cyber Security / AI for Social Good / FinTech  
-**Project Name:** **<project_name>** — Multilingual WhatsApp Scam Shield & Two-Key Family Guard for the Elderly  
+**Project Name:** **SafeLoop** — Multilingual WhatsApp Scam Shield & Two-Key Family Guard for the Elderly  
 **Repository:** [https://github.com/itz-Arun-001/K_hacks-](https://github.com/itz-Arun-001/K_hacks-)
 
 ---
 
 ## Slide 1: Title & Overview
-- **Project Name:** <project_name>
+
+- **Project Name:** SafeLoop
 - **Subtitle:** Real-Time Multilingual WhatsApp Scam Shield & Two-Key Family Guard for India's Elderly
-- **Team Name:** <team_name>
+- **Team Name:** veriTas
 - **College Name:** College of Engineering Guindy, Anna University, Chennai
 - **Problem Track:** Cyber Security / AI for Social Good / FinTech
 
 ---
 
 ## Slide 2: Problem Statement
+
 ### The ₹1,750+ Crore Epidemic of Digital Arrest & Coercion Targeting Senior Citizens
 
 - **The Ground Reality in India:**
   - In 2024 alone, over **₹1,750 Crores** were lost by Indian citizens to cyber fraud, with digital arrest, electricity disconnection threats, and fake KYC scams emerging as primary threat vectors (Source: I4C / Ministry of Home Affairs).
-  - **73% of digital arrest victims are seniors aged 60+** because fraudsters weaponize psychological fear (*"Your Aadhaar is linked to illegal parcels"*, *"Electricity cut off tonight"*, *"Non-bailable warrant issued"*) rather than attacking technical firewalls.
+  - **73% of digital arrest victims are seniors aged 60+** because fraudsters weaponize psychological fear (_"Your Aadhaar is linked to illegal parcels"_, _"Electricity cut off tonight"_, _"Non-bailable warrant issued"_) rather than attacking technical firewalls.
 - **Why Existing Defenses Fail:**
   - **Caller-ID Apps (e.g. Truecaller):** Rely on crowd-sourced spam reports. They suffer from the **"First 500 Victims" cold-start flaw**—scammers use newly registered burner SIMs with 0 spam reports, yielding a low **14.3% zero-day detection rate** in our comparative evaluations.
   - **UPI Apps (GPay / PhonePe / Paytm):** Completely blind to conversation context. Once an elderly victim enters their UPI PIN in panic, the money leaves the bank irreversibly in milliseconds.
@@ -30,16 +33,17 @@
 ---
 
 ## Slide 3: Solution Abstract
+
 ### Zero-Friction Protection on WhatsApp Backed by Escrow Holds & Mule Ring Analytics
 
-- **What <project_name> Is:**
+- **What SafeLoop Is:**
   - An end-to-end protective ecosystem operating directly inside **WhatsApp** (the primary digital application used by Indian seniors), requiring **zero new app downloads** for the elderly user.
   - Analyzes incoming text messages, forwarded regional voice notes, and outbound payment requests to prevent coerced financial loss.
-- **Core Pillars of <project_name>:**
+- **Core Pillars of SafeLoop:**
   1. **Multimodal Ingestion & Zero-Day Coercion NLP:** Extracts entities (phones, UPI IDs, shortened links, amounts) and identifies coercive psychological triggers (urgency, authority, secrecy) using a calibrated **Scikit-Learn LinearSVC ML model** (trained on 3,288 labelled Indian scam messages, 99.70% accuracy) paired with Gemini 3 Flash explanation.
   2. **Two-Key Family Guard (L4 Protect):** High-risk or anomalous transfers to unverified payees are placed into a **10-minute cooling-off Escrow Hold** governed by two keys:
-     - *Check A:* An offline secret family passkey (bcrypt-hashed with a strict 3-attempt lockout).
-     - *Check B:* An out-of-band interactive WhatsApp verification sent to the registered family member's phone (`APPROVE`, `BLOCK`, `CALL HER`). Even if an attacker coerces the code, Check B is cryptographically required.
+     - _Check A:_ An offline secret family passkey (bcrypt-hashed with a strict 3-attempt lockout).
+     - _Check B:_ An out-of-band interactive WhatsApp verification sent to the registered family member's phone (`APPROVE`, `BLOCK`, `CALL HER`). Even if an attacker coerces the code, Check B is cryptographically required.
   3. **Closed-Loop Community Immunity (L6):** When a family member marks `BLOCK`, the scammer's UPI ID/phone is added to an in-memory threat table in **$< 15\text{ ms}$**, instantly protecting all other users nationwide.
   4. **Bank Forensic Mule Graph (L5):** Maps financial transaction networks using directed graphs to detect smurfing hubs, 3-to-5 hop layering chains, and circular cycles before funds are cashed out.
 
@@ -48,47 +52,44 @@
 ## Slide 4: Architecture and System Design
 
 ```
-+---------------------------------------------------------------------------------------------------------+
-|                                    TIER 1: MULTIMODAL INGESTION LAYER                                    |
-|   • WhatsApp Business API (Twilio Webhook)  • Regional Voice Note Transcriber (Whisper: Ta/Hi/En)       |
-|   • High-Precision Regex Parser (UPI handles, 10-digit phones, .xyz/.top phishing URLs, amounts)        |
-+---------------------------------------------------------------------------------------------------------+
-                                                     │
-                                                     ▼
-+---------------------------------------------------------------------------------------------------------+
-|                                  TIER 2: AI & DECISION INTELLIGENCE CORE                                 |
-|   • Privacy Gate: In-Flight PII Redactor (<PHONE>, <UPI> tokenization before external calls)             |
-|   • Calibrated LinearSVC Classifier: Trained on 3,288 Indian scam samples (99.70% accuracy)             |
-|   • Dynamic Behavioral Profiler: Tracks 30-day user payment history (mean μ, std σ, z-score spikes)     |
-|   • Fast Threat Heuristic Rules: Urgency, Authority, Secrecy, Digital Arrest keyword patterns           |
-|   • Gemini 3 Flash Explainer: Generates simple 2-sentence advice in victim's local language             |
-+---------------------------------------------------------------------------------------------------------+
-                                                     │ (If Risk Score >= 0.70 or Unknown Payee)
-                                                     ▼
-+---------------------------------------------------------------------------------------------------------+
-|                                TIER 3: TWO-KEY ESCROW PROTECTION GATEWAY                                |
-|   • Automatic Escrow Hold: Intercepts and pauses fraudulent outbound payment transfers                 |
-|   • Check A (User Authentication): Offline secret family passkey (bcrypt-hashed, 3-attempt lockout)     |
-|   • Check B (Guardian Consensus): Out-of-band interactive WhatsApp alert dispatched to family member    |
-|   • Fail-Safe Escalation: 10-min cooling-off preserves escrow; escalates to secondary guardian           |
-+---------------------------------------------------------------------------------------------------------+
-                                                     │
-                                                     ├─────────────────────────────────────────┐
-                                                     ▼ (On Guardian BLOCK)                     ▼
-+---------------------------------------------------------------+ +---------------------------------------+
-|              TIER 4A: ACTIVE LEARNING RETRAINER               | |  TIER 4B: BANK MULE GRAPH INTELLIGENCE|
-| • Sub-15ms Threat Table Hot-Reload: Instantly writes blocked  | | • In-Memory Directed Graph Engine     |
-|   UPI/phone to global FlaggedEntity registry.                 | | • Smurfing & Fan-In/Out Hub Tracing   |
-| • Community Immunity: Protects all subsequent users nationwide| | • 3-to-5 Hop Rapid Layering Detection |
-|   before funds can be solicited again.                        | | • Streamlit Forensic Compliance UI    |
-+---------------------------------------------------------------+ +---------------------------------------+
+                     ┌──────────────────────────────────────────────┐
+                     │   Inbound Channel: WhatsApp (Twilio API)    │
+                     │  (Text Messages, Voice Notes, UPI Payees)    │
+                     └──────────────────────┬───────────────────────┘
+                                            │
+                                            ▼
+                     ┌──────────────────────────────────────────────┐
+                     │ L1 & L2: Multimodal Ingestion & Feature Extr │
+                     │ • Whisper Speech-to-Text (Ta / Hi / En)      │
+                     │ • High-Precision Regex (Phone, UPI, URLs)    │
+                     │ • Gemini 3 Flash Parser (PII-Redacted Prompt)│
+                     └──────────────────────┬───────────────────────┘
+                                            │
+                                            ▼
+                     ┌──────────────────────────────────────────────┐
+                     │ L3: 8-Layer Risk Assessment Engine (Core ML) │
+                     │ • Calibrated LinearSVC (3,288 corpus samples)│
+                     │ • Dynamic Baseline Profiler (z-score ratio)  │
+                     │ • Fast Heuristics (Urgency, Threat, Imperson)│
+                     └──────────────────────┬───────────────────────┘
+                                            │ (If Risk Level >= High)
+                                            ▼
+                     ┌──────────────────────────────────────────────┐
+                     │ L4: Two-Key Family Guard & Escrow Hold       │
+                     │ • Check A: Offline Family Code (bcrypt hash) │
+                     │ • Check B: Son/Daughter WhatsApp [BLOCK/APP] │
+                     │ • 10-Minute Cooling-Off & Auto-Escalation    │
+                     └──────────────────────┬───────────────────────┘
+                                            │
+                         ┌──────────────────┴──────────────────┐
+                         ▼                                     ▼
+        ┌───────────────────────────────────┐ ┌──────────────────────────────────┐
+        │ L5: Bank Mule Graph Intelligence  │ │ L6: Active Learning Retrainer    │
+        │ • Directed Graph Analysis (20/20) │ │ • Dynamic Community Immunity     │
+        │ • Smurfing Hubs & 5-Hop Layering  │ │ • Instant Global UPI Blacklist   │
+        │ • Streamlit Forensic Bank Console │ │ • Retrains in Memory < 15ms      │
+        └───────────────────────────────────┘ └──────────────────────────────────┘
 ```
-
-### Key Architectural Pillars:
-1. **Sub-16ms Edge Scoring:** Core risk evaluation runs locally on CPU via our Calibrated LinearSVC classifier and statistical baseline profiler, ensuring zero dependency on cloud latency.
-2. **Defense-in-Depth:** Heuristic triggers, mathematical anomalies, and deterministic blacklists run independently of LLM prompts—neutralizing prompt-injection jailbreaks.
-3. **Cryptographic Two-Key Consensus:** Financial transactions under coercion cannot be unlocked by the victim alone; Check B requires an independent family decision on an out-of-band channel.
-4. **Zero-Friction Fast-Path:** Legitimate daily payments (milkman, utilities, groceries) pass instant whitelist validation in $<15\text{ ms}$ with zero user friction.
 
 - **Technical Stack:**
   - **Backend Core:** FastAPI, Python 3.11+, SQLAlchemy, SQLite / PostgreSQL.
@@ -101,19 +102,21 @@
 ## Slide 5: Feasibility and Unique Selling Points (USPs)
 
 ### Rigorous Experimental Benchmarks & Test Results
-*(Evaluated across 3,288 real-world scam training samples, 115 synthetic payment test vectors, and 11 adversarial red-team test attacks)*
 
-| Evaluation Dimension | Traditional Tools (Truecaller / SMS Filters) | <project_name> Experimental Test Results |
-| :--- | :---: | :---: |
-| **Zero-Day Scam Detection** | **14.3%** *(Cold-start fail: needs 500+ crowd reports)* | **100.0% Detection** on 10 zero-day test cases *(Semantic NLP catches coercion immediately)* |
-| **Coerced Transfer Protection** | **0.0%** *(Cannot intercept UPI/GPay transfers)* | **100% Escrow Interception** on 40 simulated attack vectors |
-| **Legitimate Account False Positive Rate** | **High** *(5–12% normal payments flagged)* | **0.00% False Positive Rate** on control test cases *(Tea stall & rent payments pass clean)* |
-| **Adversarial Resilience** | **Vulnerable** to prompt injection & Tanglish typos | **11 / 11 Attacks Neutralized** in simulated red-team tests |
-| **Inference Latency** | $> 1,000\text{ ms}$ (Heavy cloud LLM roundtrips) | **$< 16\text{ ms}$ Local Model Latency** *(CPU-only, no cloud dependency for core checks)* |
+_(Evaluated across 3,288 real-world scam training samples, 115 synthetic payment test vectors, and 11 adversarial red-team test attacks)_
+
+| Evaluation Dimension                       |      Traditional Tools (Truecaller / SMS Filters)       |                           SafeLoop Experimental Test Results                           |
+| :----------------------------------------- | :-----------------------------------------------------: | :------------------------------------------------------------------------------------------: |
+| **Zero-Day Scam Detection**                | **14.3%** _(Cold-start fail: needs 500+ crowd reports)_ | **100.0% Detection** on 10 zero-day test cases _(Semantic NLP catches coercion immediately)_ |
+| **Coerced Transfer Protection**            |    **0.0%** _(Cannot intercept UPI/GPay transfers)_     |                 **100% Escrow Interception** on 40 simulated attack vectors                  |
+| **Legitimate Account False Positive Rate** |       **High** _(5–12% normal payments flagged)_        | **0.00% False Positive Rate** on control test cases _(Tea stall & rent payments pass clean)_ |
+| **Adversarial Resilience**                 |   **Vulnerable** to prompt injection & Tanglish typos   |                 **11 / 11 Attacks Neutralized** in simulated red-team tests                  |
+| **Inference Latency**                      |    $> 1,000\text{ ms}$ (Heavy cloud LLM roundtrips)     |  **$< 16\text{ ms}$ Local Model Latency** _(CPU-only, no cloud dependency for core checks)_  |
 
 ### Unique Selling Points (USPs):
+
 1. **Zero New App Installation for Seniors:** Operates directly inside WhatsApp with multimodal support for regional voice notes (**Tamil, Hindi, English**).
-2. **Two-Key Cryptographic Circuit Breaker:** Unlike passive caller-ID apps that only warn after the fact, <project_name> **physically pauses payment execution in escrow**. Even if a scammer tricks Amma into revealing her secret code, Check B requires out-of-band approval from the registered family member's smartphone.
+2. **Two-Key Cryptographic Circuit Breaker:** Unlike passive caller-ID apps that only warn after the fact, SafeLoop **physically pauses payment execution in escrow**. Even if a scammer tricks Amma into revealing her secret code, Check B requires out-of-band approval from the registered family member's smartphone.
 3. **Local Hybrid Architecture (ML + Rules + LLM):** Core evaluation runs locally in $<16\text{ ms}$ on a lightweight Calibrated LinearSVC model; Gemini LLM is used only for explanation, ensuring resilience even during network throttling.
 4. **Community Immunity Closed Loop:** When one guardian marks `BLOCK`, the scammer's UPI ID / phone number is written to an in-memory threat list in $<15\text{ ms}$, immediately protecting all other protected families in the network.
 
@@ -122,16 +125,19 @@
 ## Slide 6: Market Study and Business Model
 
 ### 1. Market Opportunity & Sizing:
+
 - **TAM (Total Addressable Market):** 140+ Million senior citizens in India; ₹1.2+ Lakh Crore annual digital payments volume among the 50+ age demographic.
 - **SAM (Serviceable Addressable Market):** 40+ Million elderly smartphone users actively transacting via WhatsApp and UPI.
 - **SOM (Serviceable Obtainable Market):** Tier-1 and Tier-2 Indian families subscribed to elderly care and financial protection.
 
 ### 2. Target Stakeholders:
+
 - **End Consumers (B2C):** Working urban and NRI professionals seeking automated scam protection and guardian consensus for retired parents back home.
 - **Banking Partners (B2B):** Commercial and public-sector banks (SBI, HDFC, ICICI, Canara) aiming to reduce RBI fraud liability and freeze mule networks before fund dispersal.
 - **Law Enforcement & Government (G2G):** Integration with the Indian Cyber Crime Coordination Centre (**I4C / 1930 Helpline**) and DoT **Chakshu Portal**.
 
 ### 3. Monetization Strategy:
+
 - **B2C Freemium:** Free WhatsApp scam message checking; **₹99/month "Family Shield"** for Two-Key Escrow Guard and multi-guardian escalation.
 - **B2B Enterprise Bank API:** Subscription license for banks to access the Mule Graph Intelligence API and real-time fraud telemetry feeds.
 
@@ -149,9 +155,9 @@
 
 ## Slide 8: Team Details
 
-| ROLE | NAME | STREAM / DEPT | YEAR | COLLEGE |
-| :--- | :--- | :--- | :---: | :--- |
-| **Person 1: WhatsApp Bot & Gemini Ingestion** | **Aiman N** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
-| **Person 2: Two-Key Guard & Audio Services** | **Geerthiga M** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
-| **Person 3: Graph Intelligence & Bank Console** | **Monica G** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
-| **Person 4: Core Risk Engine & ML Architecture** | **Arun S** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| ROLE                                             | NAME            | STREAM / DEPT                  |   YEAR   | COLLEGE                                        |
+| :----------------------------------------------- | :-------------- | :----------------------------- | :------: | :--------------------------------------------- |
+| **Person 1: WhatsApp Bot & Gemini Ingestion**    | **Aiman N**     | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 2: Two-Key Guard & Audio Services**     | **Geerthiga M** | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 3: Graph Intelligence & Bank Console**  | **Monica G**    | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |
+| **Person 4: Core Risk Engine & ML Architecture** | **Arun S**      | Computer Science & Engineering | 2nd Year | College of Engineering Guindy, Anna University |

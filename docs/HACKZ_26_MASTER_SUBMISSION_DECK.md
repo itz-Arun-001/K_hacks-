@@ -8,8 +8,8 @@
 
 ## Slide 1: Title Slide (Official Template)
 - **Track Title:** FinTech Security / AI for Cyber Defense / Social Cybersecurity
-- **Team Name (Registered on Portal):** `<team_name>`
-- **Project Title:** **<project_name>** (SafeLoop) — Real-Time Multilingual WhatsApp Scam Shield & Two-Key Family Escrow Guard
+- **Team Name (Registered on Portal):** `veriTas`
+- **Project Title:** **SafeLoop** (SafeLoop) — Real-Time Multilingual WhatsApp Scam Shield & Two-Key Family Escrow Guard
 
 ---
 
@@ -57,7 +57,7 @@
 ## Slide 5: Proposed Solution — Overview & Working Mechanism
 
 ### Solution Overview
-**<project_name>** is a real-time, zero-friction cyber fraud prevention ecosystem operating where Indian seniors already spend 90% of their digital time: **WhatsApp**. It combines an on-device/edge ML Risk Engine with a **Two-Key Family Escrow Guard** and a **Bank Mule Tracing Console**.
+**SafeLoop** is a real-time, zero-friction cyber fraud prevention ecosystem operating where Indian seniors already spend 90% of their digital time: **WhatsApp**. It combines an on-device/edge ML Risk Engine with a **Two-Key Family Escrow Guard** and a **Bank Mule Tracing Console**.
 
 ### Working Mechanism (Step-by-Step Flow)
 ```
@@ -85,7 +85,7 @@
 ## Slide 6: Proposed Solution — Problem–Solution Mapping, Novelty & Expected Output
 
 ### Problem–Solution Mapping
-| Identified Problem / Gap | How <project_name> Solves It |
+| Identified Problem / Gap | How SafeLoop Solves It |
 | :--- | :--- |
 | **Truecaller Cold-Start Failure on Burner SIMs** | **Semantic Zero-Day Analysis:** Analyzes message intent, coercive threat keywords, and entity relationships rather than caller reputation. |
 | **Irreversible Instant Transfer under Panic** | **Two-Key Escrow Circuit Breaker:** Physically halts outbound fund movement in a 10-minute hold pending consensus. |
@@ -229,7 +229,7 @@
 3. **Stand-alone LLM Chatbots:** Vulnerable to prompt injection, high network latency ($>1.5\text{s}$), and hallucinated risk ratings.
 
 ### Proposed Differentiation
-- **<project_name> bridges the gap** between communication channels (WhatsApp) and payment rails (UPI) via an out-of-band **Two-Key Cryptographic Escrow Guard** and **Active Learning Community Immunity**.
+- **SafeLoop bridges the gap** between communication channels (WhatsApp) and payment rails (UPI) via an out-of-band **Two-Key Cryptographic Escrow Guard** and **Active Learning Community Immunity**.
 
 ### References & Citations
 1. **Ministry of Home Affairs (MHA) & I4C Reports (2024):** National Cybercrime Threat Report on "Digital Arrests", illegal SIM farms, and overseas call-center syndicates.

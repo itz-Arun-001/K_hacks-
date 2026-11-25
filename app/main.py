@@ -31,6 +31,7 @@ from app.utils.audit import log_event
 from app.services.ml_model import get_ml_classifier, MODEL_PATH
 from app.services.guard import TwoKeyGuardService
 from app.services.stt import transcribe_voice_note
+from app.api.webhook import router as whatsapp_router
 
 # Structured application logger (replaces bare print() in services)
 logger = logging.getLogger("safeloop.api")
@@ -75,6 +76,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount WhatsApp Webhook Router (Person 1)
+app.include_router(whatsapp_router)
 
 
 # ==============================================================================
